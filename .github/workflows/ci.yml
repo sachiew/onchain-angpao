@@ -7,7 +7,7 @@ on:
 
 jobs:
   app:
-    name: Lint & typecheck
+    name: Lint, typecheck & unit tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,6 +19,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm typecheck
+      - run: pnpm test
 
   anchor:
     name: Anchor build & tests
