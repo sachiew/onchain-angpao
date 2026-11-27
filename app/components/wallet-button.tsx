@@ -70,6 +70,8 @@ export function WalletButton() {
                   className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition hover:bg-cream disabled:opacity-50 disabled:pointer-events-none"
                 >
                   {connector.icon && (
+                    // Wallet icons are data: URIs from wallet-standard; next/image adds nothing here.
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={connector.icon}
                       alt=""

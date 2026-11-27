@@ -2,13 +2,11 @@
 
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { createSolanaClient, type SolanaClient } from "./solana-client";
-import { useCluster } from "../components/cluster-context";
 
 const SolanaClientContext = createContext<SolanaClient | null>(null);
 
 export function SolanaClientProvider({ children }: { children: ReactNode }) {
-  const { cluster } = useCluster();
-  const client = useMemo(() => createSolanaClient(), [cluster]);
+  const client = useMemo(() => createSolanaClient(), []);
 
   return (
     <SolanaClientContext.Provider value={client}>

@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useState } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { address, isAddress, type Address } from "@solana/kit";
 import {
@@ -42,7 +43,7 @@ export default function AngpaoPage({ params }: { params: Promise<{ id: string }>
 
 function ClaimView({ pda }: { pda: Address }) {
   const { data, isLoading, mutate } = useAngpao(pda);
-  const { connectors, connect, status } = useWallet();
+  const { connectors, connect, status, signer } = useWallet();
   const instant = useInstantWallet();
   const { active } = useClaimer();
   const { claim, isClaiming, gasless } = useClaim(pda);
@@ -239,6 +240,15 @@ function ClaimView({ pda }: { pda: Address }) {
         </div>
       </section>
 
+      {signer?.address === data.creator && (
+        <Link
+          href="/dashboard"
+          className="block rounded-xl border border-border bg-card px-4 py-3 text-center text-sm font-semibold hover:bg-accent"
+        >
+          You sent this angpao · {soldOut || expired ? "Refund & close on your dashboard →" : "Manage on your dashboard →"}
+        </Link>
+      )}
+
       <p className="text-center text-xs">
         <a className="text-muted underline" target="_blank" rel="noopener noreferrer" href={getExplorerUrl(`/address/${pda}`)}>
           View onchain
@@ -285,6 +295,7 @@ function WalletChoice({
       {connectors.length > 0 ? (
         connectors.map((c) => (
           <button key={c.id} disabled={connecting} onClick={() => connect(c.id).catch(() => {})} className={walletBtn}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- wallet-standard data: URI icon */}
             {c.icon && <img src={c.icon} alt="" className="h-6 w-6 rounded" />}
             {c.name}
           </button>

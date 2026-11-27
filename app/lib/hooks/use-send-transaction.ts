@@ -5,12 +5,10 @@ import { useSWRConfig } from "swr";
 import type { Instruction } from "@solana/kit";
 import { createClient } from "@solana/kit-client-rpc";
 import { useWallet } from "../wallet/context";
-import { useCluster } from "../../components/cluster-context";
 import { getClusterUrl, getClusterWsConfig } from "../solana-client";
 
 export function useSendTransaction() {
   const { signer } = useWallet();
-  const { cluster } = useCluster();
   const { mutate } = useSWRConfig();
   const [isSending, setIsSending] = useState(false);
 
@@ -23,7 +21,7 @@ export function useSendTransaction() {
             payer: signer,
           })
         : null,
-    [cluster, signer]
+    [signer]
   );
 
   const send = useCallback(
