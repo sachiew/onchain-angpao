@@ -18,8 +18,8 @@ export function useSendTransaction() {
     () =>
       signer
         ? createClient({
-            url: getClusterUrl(cluster),
-            rpcSubscriptionsConfig: getClusterWsConfig(cluster),
+            url: getClusterUrl(),
+            rpcSubscriptionsConfig: getClusterWsConfig(),
             payer: signer,
           })
         : null,

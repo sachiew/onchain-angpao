@@ -2,33 +2,36 @@ import {
   isSolanaError,
   SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM,
 } from "@solana/kit";
-import {
-  getVaultErrorMessage,
-  VAULT_ERROR__VAULT_ALREADY_EXISTS,
-  VAULT_ERROR__INVALID_AMOUNT,
-  type VaultError,
-} from "../generated/vault";
+import { getAngpaoErrorMessage, type AngpaoError } from "../generated/angpao";
 
-const VAULT_ERROR_CODES: Record<number, VaultError> = {
-  [VAULT_ERROR__VAULT_ALREADY_EXISTS]: VAULT_ERROR__VAULT_ALREADY_EXISTS,
-  [VAULT_ERROR__INVALID_AMOUNT]: VAULT_ERROR__INVALID_AMOUNT,
-};
+/** Anchor custom errors start at 6000; the program defines 17 of them. */
+const FIRST = 6000;
+const COUNT = 17;
+
+export function angpaoErrorCode(err: unknown): number | null {
+  let cur: unknown = err;
+  while (cur) {
+    if (
+      isSolanaError(cur, SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM) &&
+      typeof cur.context?.code === "number"
+    ) {
+      return cur.context.code;
+    }
+    cur = cur instanceof Error ? cur.cause : undefined;
+  }
+  return null;
+}
 
 export function parseTransactionError(err: unknown): string {
   // Wallet rejection (comes from wallet-standard, not a SolanaError)
-  if (err instanceof Error && err.message.includes("User rejected")) {
+  if (err instanceof Error && /user rejected|rejected the request/i.test(err.message)) {
     return "Transaction was rejected by the wallet.";
   }
 
-  // Anchor custom program errors — use the Codama-generated error messages
-  if (
-    isSolanaError(err, SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM) &&
-    typeof err.context?.code === "number"
-  ) {
-    const vaultError = VAULT_ERROR_CODES[err.context.code];
-    if (vaultError !== undefined) {
-      return getVaultErrorMessage(vaultError);
-    }
+  // Anchor custom program errors: use the Codama-generated messages.
+  const code = angpaoErrorCode(err);
+  if (code !== null && code >= FIRST && code < FIRST + COUNT) {
+    return getAngpaoErrorMessage(code as AngpaoError);
   }
 
   // For all other errors, kit's SolanaError already has readable messages.

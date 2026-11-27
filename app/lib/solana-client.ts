@@ -1,42 +1,24 @@
 import { createEmptyClient } from "@solana/kit";
 import { rpc, rpcAirdrop } from "@solana/kit-plugin-rpc";
+import { PUBLIC_RPC_URL, PUBLIC_WS_URL, type Network } from "./config";
 
-export type ClusterMoniker = "devnet" | "testnet" | "mainnet" | "localnet";
+/**
+ * The network is fixed per deployment by NEXT_PUBLIC_NETWORK (devnet by default), since the
+ * angpao program only exists on the network it was deployed to.
+ */
+export type ClusterMoniker = Network;
 
-export const CLUSTERS: ClusterMoniker[] = [
-  "devnet",
-  "testnet",
-  "mainnet",
-  "localnet",
-];
-
-const CLUSTER_URLS: Record<ClusterMoniker, string> = {
-  devnet: "https://api.devnet.solana.com",
-  testnet: "https://api.testnet.solana.com",
-  mainnet: "https://api.mainnet-beta.solana.com",
-  localnet: "http://localhost:8899",
-};
-
-const WS_URLS: Record<ClusterMoniker, string> = {
-  devnet: "wss://api.devnet.solana.com",
-  testnet: "wss://api.testnet.solana.com",
-  mainnet: "wss://api.mainnet-beta.solana.com",
-  localnet: "ws://localhost:8900",
-};
-
-export function getClusterUrl(cluster: ClusterMoniker) {
-  return CLUSTER_URLS[cluster];
+export function getClusterUrl() {
+  return PUBLIC_RPC_URL;
 }
 
-export function getClusterWsConfig(cluster: ClusterMoniker) {
-  return cluster === "localnet" ? { url: WS_URLS[cluster] } : undefined;
+export function getClusterWsConfig() {
+  return { url: PUBLIC_WS_URL };
 }
 
-export function createSolanaClient(cluster: ClusterMoniker) {
-  const url = CLUSTER_URLS[cluster];
-  const wsUrl = WS_URLS[cluster];
+export function createSolanaClient() {
   return createEmptyClient()
-    .use(rpc(url, { url: wsUrl }))
+    .use(rpc(PUBLIC_RPC_URL, { url: PUBLIC_WS_URL }))
     .use(rpcAirdrop());
 }
 

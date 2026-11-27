@@ -199,3 +199,16 @@ onchain-angpao/
 3. **Toolchain:** Rust, the Solana CLI and Anchor **aren't installed** on this machine. May I install them (rustup, the Anza installer, AVM → Anchor 1.2.2)? That's needed before M1.
 4. **Repo:** may I `git init` here, and will you create the GitHub repo, or should I use `gh repo create` (public, MIT) at the end of M1?
 5. **Location:** scaffold into this folder (`onchain-angpao/`), keeping SPEC.md and PLAN.md at the root?
+
+## 11. Deviations recorded during build
+
+| When | Change | Why |
+|---|---|---|
+| M1 | Rust toolchain 1.96 → **1.97.1** | litesvm 0.18.2 requires it (host tests only; SBF uses platform-tools) |
+| M1 | `MAX_MESSAGE_BYTES` is `u16` | Anchor's `#[constant]` IDL export doesn't support `usize` |
+| M1 | Account fixed size is **311** bytes (not 310) | added `allowlist_cap: u8` |
+| M2 | Stay on **Kit 6.10** + `@codama/renderers-js` 1.7.1 (not Kit 8.6) | the template's `@solana/kit-client-rpc` supports at most Kit 7; revisit once it supports 8 |
+| M2 | `@solana-program/compute-budget@0.16.0`, `system@0.12.2` | last versions compatible with Kit 6 |
+| M2 | Next.js 16.4.3 → **16.4.6** | `next build` blocked 16.4.3 for a known vulnerability; `pnpm audit` is now clean |
+| M2 | Network fixed per deploy via `NEXT_PUBLIC_NETWORK` (template's cluster switcher removed) | the program only exists where it was deployed |
+| M2 | Angpao PDA derived by hand (`app/lib/angpao.ts`) | Codama doesn't generate PDA helpers when seeds come from instruction args |
