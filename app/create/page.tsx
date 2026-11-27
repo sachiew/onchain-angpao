@@ -23,6 +23,7 @@ import {
 } from "../lib/angpao";
 import { ALLOWLIST_CHUNK, MAX_ALLOWLIST, MIN_PASSPHRASE, normalizePassphrase, parseAllowlist, passphraseHash } from "../lib/gate";
 import { relayerInfo } from "../lib/gasless";
+import { addHistory } from "../lib/history";
 import {
   equalSplit,
   formatSol,
@@ -129,6 +130,7 @@ export default function CreatePage() {
       });
       const signature = await send({ instructions: [ix] });
       const shareText = `${theme.emoji} ${fiatLabel ?? solLabel} · ${packets} packets (${mode === "lucky" ? "Lucky" : "Equal"}). ${message}`;
+      addHistory(signer.address, { angpao, createdAt: Date.now(), label: `${theme.emoji} ${fiatLabel ?? solLabel} · ${message}` });
       const pendingAllowlist = await writeAllowlist(angpao, invitees);
       setCreated({ angpao, signature, shareText, passphrase: phrase, pendingAllowlist });
       if (!pendingAllowlist.length) toast.success("Angpao created!");
@@ -193,7 +195,12 @@ export default function CreatePage() {
             <p className="mt-1 text-xs text-muted">Not in the link. Tell your guests separately.</p>
           </div>
         )}
-        <ShareSheet url={url} text={created.shareText} explorerUrl={getExplorerUrl(`/tx/${created.signature}`)} />
+        <ShareSheet
+          url={url}
+          text={created.shareText}
+          angpao={created.angpao}
+          passphraseGated={!!created.passphrase}
+          explorerUrl={getExplorerUrl(`/tx/${created.signature}`)} />
         <button onClick={() => setCreated(null)} className="w-full text-sm text-muted underline">
           Create another
         </button>
