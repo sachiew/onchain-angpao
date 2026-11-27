@@ -5,16 +5,21 @@ import { Toaster } from "sonner";
 import { PropsWithChildren } from "react";
 import { ClusterProvider } from "./cluster-context";
 import { WalletProvider } from "../lib/wallet/context";
+import { InstantWalletProvider } from "../lib/wallet/instant";
 import { SolanaClientProvider } from "../lib/solana-client-context";
+import { MwaRegister } from "./mwa-register";
 
 export function Providers({ children }: PropsWithChildren) {
   return (
     <ThemeProvider attribute="class" defaultTheme="dark">
       <ClusterProvider>
         <SolanaClientProvider>
-          <WalletProvider>{children}</WalletProvider>
+          <WalletProvider>
+            <InstantWalletProvider>{children}</InstantWalletProvider>
+          </WalletProvider>
         </SolanaClientProvider>
-        <Toaster position="bottom-right" richColors />
+        <MwaRegister />
+        <Toaster position="top-center" richColors />
       </ClusterProvider>
     </ThemeProvider>
   );

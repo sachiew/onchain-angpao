@@ -3,7 +3,9 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { motion } from "motion/react";
+import useSWR from "swr";
 import type { Address } from "@solana/kit";
+import { GateKind } from "../generated/angpao";
 import { Envelope } from "../components/envelope";
 import { ShareSheet } from "../components/share-sheet";
 import { useWallet } from "../lib/wallet/context";
@@ -11,7 +13,16 @@ import { useSendTransaction } from "../lib/hooks/use-send-transaction";
 import { useFiat, usePrices } from "../lib/hooks/use-prices";
 import { useCluster } from "../components/cluster-context";
 import { parseTransactionError } from "../lib/errors";
-import { buildCreateAngpaoIx, EXPIRY_OPTIONS, MAX_MESSAGE_BYTES, randomId } from "../lib/angpao";
+import {
+  buildCreateAngpaoIx,
+  buildSetAllowlistIxs,
+  EXPIRY_OPTIONS,
+  findAngpaoPda,
+  MAX_MESSAGE_BYTES,
+  randomId,
+} from "../lib/angpao";
+import { ALLOWLIST_CHUNK, MAX_ALLOWLIST, MIN_PASSPHRASE, normalizePassphrase, parseAllowlist, passphraseHash } from "../lib/gate";
+import { relayerInfo } from "../lib/gasless";
 import {
   equalSplit,
   formatSol,
@@ -24,7 +35,15 @@ import {
 import { FIAT_CODES, FIATS, fiatToLamports, formatFiat, toMinor, type FiatCode } from "../lib/fiat";
 import { byteLength, getTheme, LANGS, THEMES, type Lang } from "../lib/themes";
 
-type Created = { angpao: Address; signature: string; shareText: string };
+type Gate = "open" | "passphrase" | "allowlist";
+type Created = {
+  angpao: Address;
+  signature: string;
+  shareText: string;
+  passphrase?: string;
+  /** Invitees not yet written onchain (a follow-up tx failed or was rejected). */
+  pendingAllowlist: Address[];
+};
 
 export default function CreatePage() {
   const { signer, status } = useWallet();
@@ -41,7 +60,13 @@ export default function CreatePage() {
   const [lang, setLang] = useState<Lang>("zh");
   const [customMessage, setCustomMessage] = useState<string | null>(null);
   const [expiryIdx, setExpiryIdx] = useState(1);
+  const [gate, setGate] = useState<Gate>("open");
+  const [passphrase, setPassphrase] = useState("");
+  const [allowlistText, setAllowlistText] = useState("");
   const [created, setCreated] = useState<Created | null>(null);
+  const { data: server } = useSWR("relayer-info", relayerInfo, { revalidateOnFocus: false });
+  const gatekeeper = server?.gatekeeper ?? null;
+  const allowlist = useMemo(() => parseAllowlist(allowlistText), [allowlistText]);
 
   const theme = getTheme(themeId);
   const solPrice = prices?.solana?.[fiat];
@@ -62,6 +87,15 @@ export default function CreatePage() {
     lamports === 0n ? (unit === "fiat" && !solPrice ? "Waiting for price…" : "Enter an amount") : null,
     lamports > 0n ? validateSplitInput(lamports, packets) : null,
     msgBytes > MAX_MESSAGE_BYTES ? `Message is ${msgBytes}/${MAX_MESSAGE_BYTES} bytes` : null,
+    gate === "passphrase" && !gatekeeper ? "Passphrase gates need a server gatekeeper key" : null,
+    gate === "passphrase" && normalizePassphrase(passphrase).length < MIN_PASSPHRASE
+      ? `Passphrase needs at least ${MIN_PASSPHRASE} characters`
+      : null,
+    gate === "allowlist" && allowlist.invalid.length ? `Not a wallet address: ${allowlist.invalid[0].slice(0, 16)}` : null,
+    gate === "allowlist" && allowlist.addresses.length === 0 ? "Add at least one wallet address" : null,
+    gate === "allowlist" && allowlist.addresses.length > MAX_ALLOWLIST
+      ? `At most ${MAX_ALLOWLIST} wallets (you have ${allowlist.addresses.length})`
+      : null,
   ].filter(Boolean) as string[];
 
   const fiatLabel = fiatValue > 0 ? formatFiat(fiatValue, fiat) : null;
@@ -74,6 +108,9 @@ export default function CreatePage() {
       const amounts = mode === "lucky" ? luckySplit(lamports, packets) : equalSplit(lamports, packets);
       const id = randomId();
       const expiryTs = BigInt(Math.floor(Date.now() / 1000) + EXPIRY_OPTIONS[expiryIdx].seconds);
+      const pda = await findAngpaoPda(signer.address, id);
+      const phrase = gate === "passphrase" ? normalizePassphrase(passphrase) : undefined;
+      const invitees = gate === "allowlist" ? allowlist.addresses : [];
       const { ix, angpao } = await buildCreateAngpaoIx({
         creator: signer,
         id,
@@ -84,24 +121,78 @@ export default function CreatePage() {
         expiryTs,
         fiat,
         fiatTotalMinor: fiatValue > 0 ? toMinor(fiatValue, fiat) : 0n,
+        ...(phrase
+          ? { gatekeeper, gateKind: GateKind.Passphrase, gateHash: await passphraseHash(pda, phrase) }
+          : invitees.length
+            ? { gateKind: GateKind.Allowlist, allowlistCap: invitees.length }
+            : {}),
       });
       const signature = await send({ instructions: [ix] });
       const shareText = `${theme.emoji} ${fiatLabel ?? solLabel} · ${packets} packets (${mode === "lucky" ? "Lucky" : "Equal"}). ${message}`;
-      setCreated({ angpao, signature, shareText });
-      toast.success("Angpao created!");
+      const pendingAllowlist = await writeAllowlist(angpao, invitees);
+      setCreated({ angpao, signature, shareText, passphrase: phrase, pendingAllowlist });
+      if (!pendingAllowlist.length) toast.success("Angpao created!");
     } catch (e) {
       toast.error(parseTransactionError(e));
     }
   }
 
+  /** Send set_allowlist chunks in order; returns the invitees that didn't make it onchain. */
+  async function writeAllowlist(angpao: Address, invitees: Address[]): Promise<Address[]> {
+    if (!signer || !invitees.length) return [];
+    const ixs = buildSetAllowlistIxs(signer, angpao, invitees);
+    for (let i = 0; i < ixs.length; i++) {
+      try {
+        await send({ instructions: [ixs[i]] });
+      } catch (e) {
+        toast.error(`Couldn't save the invite list: ${parseTransactionError(e)}`);
+        return invitees.slice(i * ALLOWLIST_CHUNK);
+      }
+    }
+    return [];
+  }
+
+  async function retryAllowlist() {
+    if (!created) return;
+    const pendingAllowlist = await writeAllowlist(created.angpao, created.pendingAllowlist);
+    setCreated({ ...created, pendingAllowlist });
+    if (!pendingAllowlist.length) toast.success("Invite list saved");
+  }
+
   if (created) {
     const url = `${window.location.origin}/a/${created.angpao}`;
+    if (created.pendingAllowlist.length) {
+      return (
+        <div className="mx-auto max-w-md space-y-4 pt-10 text-center">
+          <h1 className="text-2xl font-extrabold tracking-tight">One more signature</h1>
+          <p className="text-muted">
+            Your angpao is funded, but {created.pendingAllowlist.length} invited wallet
+            {created.pendingAllowlist.length === 1 ? " isn't" : "s aren't"} on the list yet. Until they are, they
+            can&apos;t claim.
+          </p>
+          <button
+            onClick={retryAllowlist}
+            disabled={isSending}
+            className="w-full rounded-2xl bg-[#c8102e] py-4 text-lg font-bold text-white disabled:opacity-50"
+          >
+            {isSending ? "Confirm in your wallet…" : "Save invite list"}
+          </button>
+        </div>
+      );
+    }
     return (
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mx-auto max-w-md space-y-6 pt-10">
         <div className="text-center">
           <h1 className="text-3xl font-extrabold tracking-tight">Your angpao is live 🎉</h1>
           <p className="mt-2 text-muted">Share it before the packets run out.</p>
         </div>
+        {created.passphrase && (
+          <div className="rounded-xl border border-border bg-card p-4 text-center">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted">Passphrase</p>
+            <p className="mt-1 font-mono text-xl font-bold">{created.passphrase}</p>
+            <p className="mt-1 text-xs text-muted">Not in the link. Tell your guests separately.</p>
+          </div>
+        )}
         <ShareSheet url={url} text={created.shareText} explorerUrl={getExplorerUrl(`/tx/${created.signature}`)} />
         <button onClick={() => setCreated(null)} className="w-full text-sm text-muted underline">
           Create another
@@ -272,6 +363,56 @@ export default function CreatePage() {
           <p className="mt-2 text-xs text-muted">Unclaimed packets come back to you after expiry.</p>
         </div>
 
+        {/* Gate */}
+        <div>
+          <label className={label}>Who can claim</label>
+          <div className="flex rounded-xl bg-accent p-1">
+            <button className={seg(gate === "open")} onClick={() => setGate("open")}>
+              Anyone
+            </button>
+            <button className={seg(gate === "passphrase")} onClick={() => setGate("passphrase")}>
+              🔑 Passphrase
+            </button>
+            <button className={seg(gate === "allowlist")} onClick={() => setGate("allowlist")}>
+              📋 Invite list
+            </button>
+          </div>
+          {gate === "open" && <p className="mt-2 text-xs text-muted">Anyone with the link, first come first served.</p>}
+          {gate === "passphrase" && (
+            <div className="mt-3 space-y-2">
+              <input
+                value={passphrase}
+                onChange={(e) => setPassphrase(e.target.value)}
+                placeholder="e.g. huat-ah-2027"
+                autoComplete="off"
+                className="w-full rounded-xl border border-border bg-card px-4 py-3 outline-none focus:ring-2 focus:ring-ring"
+                aria-label="Passphrase"
+              />
+              <p className="text-xs text-muted">
+                {gatekeeper
+                  ? "Guests type it to claim. It isn't in the link. Use something hard to guess: a hash of it is stored onchain."
+                  : "This server has no gatekeeper key, so passphrase gates are unavailable."}
+              </p>
+            </div>
+          )}
+          {gate === "allowlist" && (
+            <div className="mt-3 space-y-2">
+              <textarea
+                rows={3}
+                value={allowlistText}
+                onChange={(e) => setAllowlistText(e.target.value)}
+                placeholder="Paste wallet addresses, one per line"
+                className="w-full resize-none rounded-xl border border-border bg-card px-4 py-3 font-mono text-xs outline-none focus:ring-2 focus:ring-ring"
+                aria-label="Invited wallets"
+              />
+              <p className="text-xs text-muted">
+                {allowlist.addresses.length}/{MAX_ALLOWLIST} wallets. Enforced onchain. Needs{" "}
+                {1 + Math.ceil(Math.max(allowlist.addresses.length, 1) / ALLOWLIST_CHUNK)} wallet signatures.
+              </p>
+            </div>
+          )}
+        </div>
+
         <button
           onClick={onCreate}
           disabled={isSending || status !== "connected" || errors.length > 0}
@@ -298,7 +439,8 @@ export default function CreatePage() {
           />
         </div>
         <p className="mt-4 text-center text-xs text-muted">
-          You pay {solLabel ?? "the total"} plus a small refundable deposit (≈ {formatSol(BigInt((128 + 311 + 48 * packets) * 6960))} SOL).
+          You pay {solLabel ?? "the total"} plus a small refundable deposit (≈{" "}
+          {formatSol(BigInt((128 + 311 + 48 * packets + (gate === "allowlist" ? 32 * allowlist.addresses.length : 0)) * 6960))} SOL).
         </p>
       </aside>
     </div>

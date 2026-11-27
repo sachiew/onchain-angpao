@@ -10,10 +10,12 @@ import {
   GateKind,
   SplitMode,
   getCreateAngpaoInstruction,
+  getSetAllowlistInstruction,
   type Angpao,
 } from "../generated/angpao";
 import { PROGRAM_ADDRESS } from "./config";
 import { fiatCodeBytes, type FiatCode } from "./fiat";
+import { ALLOWLIST_CHUNK, chunk } from "./gate";
 
 export const MAX_MESSAGE_BYTES = 140;
 export const EXPIRY_OPTIONS = [
@@ -83,6 +85,16 @@ export async function buildCreateAngpaoIx(p: CreateParams) {
     { programAddress: PROGRAM_ADDRESS },
   );
   return { ix, angpao };
+}
+
+/**
+ * `set_allowlist` instructions, ≤25 wallets each so every one fits in its own transaction.
+ * Send them after `create_angpao` and before sharing: until then nobody is on the list.
+ */
+export function buildSetAllowlistIxs(creator: TransactionSigner, angpao: Address, entries: Address[]) {
+  return chunk(entries, ALLOWLIST_CHUNK).map((c) =>
+    getSetAllowlistInstruction({ creator, angpao, entries: c }, { programAddress: PROGRAM_ADDRESS }),
+  );
 }
 
 /** Derived view helpers used by the claim page, feed and dashboard. */

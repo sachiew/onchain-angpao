@@ -212,3 +212,5 @@ onchain-angpao/
 | M2 | Next.js 16.4.3 → **16.4.6** | `next build` blocked 16.4.3 for a known vulnerability; `pnpm audit` is now clean |
 | M2 | Network fixed per deploy via `NEXT_PUBLIC_NETWORK` (template's cluster switcher removed) | the program only exists where it was deployed |
 | M2 | Angpao PDA derived by hand (`app/lib/angpao.ts`) | Codama doesn't generate PDA helpers when seeds come from instruction args |
+| M4 | Allowlist written with separate `set_allowlist` txs after create (1 + ⌈n/25⌉ signatures) | create (N=50) + 25 entries exceeds 1,232 bytes; claims are refused until the list is written, so there's no race |
+| M4 | Passphrase minimum 6 chars, gatekeeper = server's `GATEKEEPER_SECRET_KEY` (from `/api/relayer`) | the hash is onchain, so short phrases are guessable offline |
