@@ -414,7 +414,7 @@ const zh: Dict = {
     atCreation: (v: string) => ` · 创建时 ${v}`,
     now: (v: string) => ` · 现值 ${v}`,
     liveClaims: "实时领取",
-    live: "直播中",
+    live: "实时",
     noClaims: "还没有人领取，快来抢第一个！🏃",
     you: "你",
     luckiestTag: "手气最佳",

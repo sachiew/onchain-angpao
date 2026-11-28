@@ -14,6 +14,7 @@ Send red packets (angpao / hongbao / duit raya) on Solana. Pick a total, a numbe
 - **Gates:** anyone with the link, a **passphrase** (the server co-signs), or an **invite list** of up to 50 wallets (enforced by the program).
 - **Live claim feed** through a websocket account subscription, a countdown, a sold-out state and a 👑 for the luckiest packet.
 - **Local currency** everywhere (22 currencies including USD, EUR, GBP, JPY, CNY, HKD, SGD, MYR, IDR, THB, INR and AUD) via CoinGecko, showing the value at creation and the value now.
+- **English / 中文 site toggle** in the header. It is remembered per browser, and Chinese-language browsers start in 中文.
 - **8 themes:** Chinese New Year, Hari Raya, Deepavali, Christmas, Birthday, Wedding, Graduation and Custom. Each has greetings in English, Bahasa Melayu and 中文.
 - **Sharing:** link, camera QR, Solana Pay wallet QR, Blink, WhatsApp/Telegram, and themed Open Graph previews.
 - **Creator dashboard** with claim progress, **Refund & close** (after expiry or once sold out) and **Cancel** (before anyone claims).
@@ -219,6 +220,7 @@ These are enforced by the program in `anchor/programs/angpao/src/constants.rs`, 
 | Deploy-to-Vercel button | the `repository-url` in this README |
 | Currencies and the default currency | `app/lib/fiat.ts` (must be CoinGecko `vs_currencies` codes) and `NEXT_PUBLIC_DEFAULT_FIAT` |
 | Themes and greetings | `app/lib/themes.ts` |
+| Site text and translations (EN / 中文) | `app/lib/i18n.tsx`. To add a language, copy the `en` dictionary; TypeScript makes every language match it key for key |
 
 ### Third-party services
 
