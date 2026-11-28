@@ -42,7 +42,7 @@ export default function AngpaoPage({ params }: { params: Promise<{ id: string }>
 }
 
 function ClaimView({ pda }: { pda: Address }) {
-  const { data, isLoading, mutate } = useAngpao(pda);
+  const { data, isLoading, error, mutate } = useAngpao(pda);
   const { connectors, connect, status, signer } = useWallet();
   const instant = useInstantWallet();
   const { active } = useClaimer();
@@ -56,8 +56,14 @@ function ClaimView({ pda }: { pda: Address }) {
   const [creating, setCreating] = useState(false);
   const [passphrase, setPassphrase] = useState("");
 
-  if (isLoading && data === undefined) return <Centered>Loading angpao…</Centered>;
-  if (!data)
+  // `undefined` = not loaded yet (or the RPC failed); `null` = the account really doesn't exist.
+  if (data === undefined)
+    return (
+      <Centered>
+        {error && !isLoading ? "Couldn't reach the Solana network. Retrying…" : "Loading angpao…"}
+      </Centered>
+    );
+  if (data === null)
     return (
       <Centered>
         <p className="text-lg font-semibold text-foreground">This angpao is gone 🍃</p>

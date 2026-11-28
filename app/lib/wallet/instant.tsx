@@ -36,6 +36,10 @@ export function InstantWalletProvider({ children }: PropsWithChildren) {
   const [burner, setBurner] = useState<ClaimSigner | null>(null);
   const [privy, setPrivy] = useState<PrivyApi | null>(null);
   const waiter = useRef<((s: ClaimSigner) => void) | null>(null);
+  // Privy's SDK is browser-only: mount it after hydration instead of server-rendering it.
+  const [mounted, setMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time client mount flag
+  useEffect(() => setMounted(true), []);
 
   // Restore an existing burner on load.
   useEffect(() => {
@@ -90,7 +94,7 @@ export function InstantWalletProvider({ children }: PropsWithChildren) {
   return (
     <Ctx.Provider value={value}>
       {children}
-      {PrivyLayer && PRIVY_APP_ID && (
+      {PrivyLayer && PRIVY_APP_ID && mounted && (
         <Suspense fallback={null}>
           <PrivyLayer appId={PRIVY_APP_ID} onApi={setPrivy} />
         </Suspense>
