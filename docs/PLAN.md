@@ -214,6 +214,7 @@ onchain-angpao/
 | M2 | Angpao PDA derived by hand (`app/lib/angpao.ts`) | Codama doesn't generate PDA helpers when seeds come from instruction args |
 | M4 → later | Allowlist: as many invitees as fit ride in the create tx (`planCreateTransactions`, size-checked); the rest in `set_allowlist` txs of 25. Typical case = 1 approval | create (N=50) + 25 entries exceeds 1,232 bytes; claims are refused until the list is written, so there's no race |
 | M4 | Passphrase minimum 6 chars, gatekeeper = server's `GATEKEEPER_SECRET_KEY` (from `/api/relayer`) | the hash is onchain, so short phrases are guessable offline |
+| Post-M6 | **Blinks removed** (`/actions.json`, `/api/actions/angpao/[id]`, "Open as Blink"). Solana Pay kept; its helpers moved to `app/lib/server/pay.ts` | Phantom discontinued Blinks ("no plans to resume support", docs.phantom.com) and Dialect's dial.to/registry went offline (Nov 2026) |
 | M5 | Actions headers/CORS/chain IDs taken from `@solana/actions-spec` 2.4.2 + `@solana/actions` 1.6.6 package source (`X-Action-Version: 2.4`) | solana.com docs returned 429; the Solana Pay spec repo is gone, so tx-request rules come from `@solana/pay` 1.0.26 `fetchTransaction` |
 | M5 | Dashboard lists open angpaos via `getProgramAccounts` (memcmp creator); closed ones come from a per-browser history in localStorage | closed accounts are deleted onchain |
 | M5 | OG image loads a Noto Sans SC subset from Google Fonts at render time (falls back to the default font) | Satori's bundled font has no CJK; a full CJK font exceeds the 500 KB OG bundle limit |

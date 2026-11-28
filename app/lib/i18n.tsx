@@ -61,7 +61,7 @@ const en = {
     howItWorks: "How it works",
     steps: [
       { title: "Fill it", body: "Pick a total, how many packets, Lucky or Equal, and a greeting." },
-      { title: "Share it", body: "Send the link, QR or Blink to your group chat, or show it at a physical event." },
+      { title: "Share it", body: "Send the link or QR to your group chat, or show it at a physical event." },
       { title: "Friends & family rush in", body: "They open the envelope and claim in seconds. No wallet yet? They get a free one instantly. No gas needed." },
     ],
     whatsNext: "What's next",
@@ -155,7 +155,6 @@ const en = {
     copied: "Copied!",
     more: "More…",
     openAngpao: "Open angpao",
-    openBlink: "Open as Blink",
     viewTx: "View transaction on Solana Explorer",
   },
   claim: {
@@ -289,7 +288,7 @@ const zh: Dict = {
     howItWorks: "怎么玩",
     steps: [
       { title: "包红包", body: "设定总金额、红包个数、拼手气或普通红包，再写一句祝福。" },
-      { title: "发出去", body: "把链接、二维码或 Blink 发到群里，或在线下活动现场展示。" },
+      { title: "发出去", body: "把链接或二维码发到群里，或在线下活动现场展示。" },
       { title: "亲朋好友来抢", body: "打开红包，几秒就领到。还没有钱包？立即免费送一个，无需手续费。" },
     ],
     whatsNext: "接下来",
@@ -382,7 +381,6 @@ const zh: Dict = {
     copied: "已复制！",
     more: "更多…",
     openAngpao: "打开红包",
-    openBlink: "以 Blink 打开",
     viewTx: "在 Solana 浏览器中查看交易",
   },
   claim: {

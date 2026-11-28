@@ -7,7 +7,7 @@ import { formatSol } from "../split";
 import { getTheme, type Theme } from "../themes";
 import { serverRpc } from "./rpc";
 
-/** Everything a link preview (OG image, metadata, Blink, Solana Pay) needs, read from chain. */
+/** Everything a link preview (OG image, metadata, Solana Pay) needs, read from chain. */
 export type AngpaoSummary = {
   address: Address;
   data: Angpao;

@@ -25,8 +25,6 @@ export function ShareSheet({
   const origin = new URL(url).origin;
   // Solana Pay transaction request: the link inside `solana:` must be URL-encoded (it has a query).
   const payUrl = `solana:${encodeURIComponent(`${origin}/api/pay/claim?angpao=${angpao}`)}`;
-  // Blink: the Actions URL behind an interstitial that renders it for anyone (dial.to).
-  const blinkUrl = `https://dial.to/?action=${encodeURIComponent(`solana-action:${origin}/api/actions/angpao/${angpao}`)}`;
   const full = `${text}\n${url}`;
   const canNativeShare = typeof navigator !== "undefined" && "share" in navigator;
 
@@ -89,9 +87,6 @@ export function ShareSheet({
           {t.share.openAngpao}
         </a>
       </div>
-      <a className={`${btn} w-full`} target="_blank" rel="noopener noreferrer" href={blinkUrl}>
-        {t.share.openBlink}
-      </a>
       {explorerUrl && (
         <a className="block text-center text-xs text-muted underline" target="_blank" rel="noopener noreferrer" href={explorerUrl}>
           {t.share.viewTx}

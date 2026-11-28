@@ -62,7 +62,7 @@ export type BuildInput = { angpao: Address; claimer: Address; passphrase?: strin
  * Build the sponsored claim transaction: relayer = fee payer. The relayer (and the
  * gatekeeper, for gated angpaos) sign now, so the claimer's wallet sees a partially signed
  * transaction it must not modify. The claimer signs and calls `submitClaim` (or, for
- * Solana Pay / Blinks, the wallet broadcasts it itself).
+ * Solana Pay, the wallet broadcasts it itself).
  */
 export async function buildClaim({ angpao, claimer, passphrase, ip }: BuildInput) {
   const relayer = await requireRelayer();

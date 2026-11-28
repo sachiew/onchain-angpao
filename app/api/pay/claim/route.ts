@@ -1,4 +1,4 @@
-import { actionError, claimForAccount, json, origin, preflight } from "../../../lib/server/actions";
+import { claimForAccount, json, origin, payError, preflight } from "../../../lib/server/pay";
 
 /**
  * Solana Pay transaction request: `solana:<url-encoded https://…/api/pay/claim?angpao=<pda>>`.
@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     const angpao = new URL(req.url).searchParams.get("angpao") ?? "";
     return await claimForAccount(req, angpao, undefined, "Angpao claimed! 🧧");
   } catch (e) {
-    return actionError(e);
+    return payError(e);
   }
 }
 

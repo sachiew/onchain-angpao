@@ -1,6 +1,6 @@
 # 🧧 Onchain Angpao 链上红包
 
-Send red packets (angpao / hongbao / duit raya) on Solana. Pick a total, a number of packets, **Lucky** or **Equal** split and a greeting. Share a link, QR or Blink. Friends open a themed envelope and claim straight into a Solana wallet, even a brand-new one with **0 SOL**, because claims are **gasless**.
+Send red packets (angpao / hongbao / duit raya) on Solana. Pick a total, a number of packets, **Lucky** or **Equal** split and a greeting. Share a link or QR. Friends open a themed envelope and claim straight into a Solana wallet, even a brand-new one with **0 SOL**, because claims are **gasless**.
 
 <p align="center">
   <img src="docs/demo.gif" width="320" alt="Create an angpao, open it on a phone, claim with a free instant wallet, then watch the live feed sell out with a crown on the luckiest packet" />
@@ -16,7 +16,7 @@ Send red packets (angpao / hongbao / duit raya) on Solana. Pick a total, a numbe
 - **Local currency** everywhere (22 currencies including USD, EUR, GBP, JPY, CNY, HKD, SGD, MYR, IDR, THB, INR and AUD) via CoinGecko, showing the value at creation and the value now.
 - **English / 中文 site toggle** in the header. It is remembered per browser, and Chinese-language browsers start in 中文.
 - **8 themes:** Chinese New Year, Hari Raya, Deepavali, Christmas, Birthday, Wedding, Graduation and Custom. Each has greetings in English, Bahasa Melayu and 中文.
-- **Sharing:** link, camera QR, Solana Pay wallet QR, Blink, WhatsApp/Telegram, and themed Open Graph previews.
+- **Sharing:** link, camera QR, Solana Pay wallet QR, WhatsApp/Telegram, and themed Open Graph previews. Share it again any time from the dashboard.
 - **Creator dashboard** with claim progress, **Refund & close** (after expiry or once sold out) and **Cancel** (before anyone claims).
 - **No database.** All angpao state lives onchain, and Redis only holds rate-limit counters.
 
@@ -34,7 +34,7 @@ sequenceDiagram
     S->>W: /create: total, packets, split, theme, gate
     W->>W: compute split client-side (lamports)
     S->>P: create_angpao (sender signs & pays): SOL moves into the PDA
-    S-->>C: share link / QR / Blink
+    S-->>C: share link / QR
 
     C->>W: open /a/<pda>, tap envelope, pick wallet
     W->>R: POST /build {angpao, claimer, passphrase?}
@@ -48,7 +48,7 @@ sequenceDiagram
     P-->>W: accountSubscribe pushes the new state: feed + confetti
 ```
 
-Blinks (`/api/actions/angpao/<pda>`) and Solana Pay (`/api/pay/claim?angpao=<pda>`) reuse the same relayer-built transaction. The wallet adds the claimer's signature and broadcasts it itself. It can't change anything else, because that would break the relayer's signature.
+Solana Pay (`/api/pay/claim?angpao=<pda>`, the "Wallet QR") reuses the same relayer-built transaction. The wallet adds the claimer's signature and broadcasts it itself. It can't change anything else, because that would break the relayer's signature.
 
 ## Solana for EVM developers
 
@@ -67,7 +67,6 @@ Blinks (`/api/actions/angpao/<pda>`) and Solana Pay (`/api/pay/claim?angpao=<pda
 | **`accountSubscribe`** | `eth_subscribe` on storage | Live claim feed |
 | **getProgramAccounts + memcmp** | An indexed event query | Dashboard: "angpaos where creator = me" |
 | **Versioned (v0) tx, 1,232-byte limit** | Calldata limits | Caps packets at 50 |
-| **Blink / Solana Action** | A shareable "transaction URL" | Claim button that unfurls in supported clients |
 
 Inline `Solana note:` comments in the code explain these where they're used.
 
@@ -112,7 +111,7 @@ Every variable is documented in [`.env.example`](.env.example). The ones that ma
 | `UPSTASH_REDIS_REST_URL` / `_TOKEN` | **production** | Rate limits and budget. Without them the relayer refuses to run on Vercel |
 | `COINGECKO_DEMO_API_KEY` | recommended | Free key. Keyless works only for light local use |
 | `NEXT_PUBLIC_PRIVY_APP_ID` | – | Enables email/Google embedded wallets. Otherwise burner wallets are used |
-| `NEXT_PUBLIC_SITE_URL` | production | Used for share links, Blink icons and OG images |
+| `NEXT_PUBLIC_SITE_URL` | production | Used for share links, the Solana Pay icon and OG images |
 | `NEXT_PUBLIC_DEFAULT_FIAT` | – | `usd` by default. Any of the 22 codes in `app/lib/fiat.ts` |
 
 ## Deploy the program to devnet
@@ -192,9 +191,9 @@ All counters live in Upstash Redis, so they hold across serverless instances. Wi
 
 Good to know:
 - **The budget is charged when a claim is built**, not when it lands, so abandoned claims count too. The cap errs on the safe side.
-- **When the budget runs out**, gasless claims are refused until 00:00 UTC. On the claim page, someone with a **connected wallet holding a little SOL** automatically falls back to paying their own ≈0.000005 SOL fee. Instant wallets (0 SOL), passphrase angpaos (they need the server's co-signature), Blinks and Solana Pay all go through the relayer, so they wait for the reset. Raise the budget for big events.
+- **When the budget runs out**, gasless claims are refused until 00:00 UTC. On the claim page, someone with a **connected wallet holding a little SOL** automatically falls back to paying their own ≈0.000005 SOL fee. Instant wallets (0 SOL), passphrase angpaos (they need the server's co-signature) and Solana Pay go through the relayer, so they wait for the reset. Raise the budget for big events.
 - **The relayer signs only one transaction shape** (`[SetComputeUnitLimit, SetComputeUnitPrice, claim]` for this program, with the relayer used only as fee payer), checked in `app/lib/server/verify.ts`. It can't be tricked into paying for anything else.
-- **Shared IPs:** an office or school Wi-Fi, or a Blink client's proxy, shares one per-IP limit. Raise it for big events.
+- **Shared IPs:** an office or school Wi-Fi shares one per-IP limit. Raise it for big events.
 - **A race on the last packet:** when several people claim it at the same moment, the losing transactions can fail onchain after passing preflight, and the relayer still pays their fee.
 - **Monitor and top up:** `GET /api/relayer` shows whether gasless claims are on and the relayer address. Check its balance on an explorer, and top up with `pnpm relayer:fund` (devnet) or a normal transfer (mainnet). Keep only a small float on it.
 
@@ -241,7 +240,6 @@ Mainnet is **off by default**. It needs `NEXT_PUBLIC_NETWORK=mainnet`, `NEXT_PUB
 - **Lucky randomness is chosen by the sender's browser** at creation. The sender could pick a favourable split.
 - **Burner wallets** keep their key in `localStorage`. Anyone with access to the browser can take the funds, so the UI pushes people to sweep to a real wallet.
 - **A race on the last packet:** when several people claim it at once, the losing transactions fail onchain and the relayer still pays their fee (≈0.00001 SOL each). Preflight simulation filters most of them out.
-- **Blinks** render in Blink-aware clients and on [dial.to](https://dial.to). Unfurling directly on X requires registering in the Dialect Actions registry. Blink requests made through a client's proxy share its IP for rate limiting.
 - **Solana Pay QR** isn't offered for passphrase angpaos, because transaction requests can't ask for input.
 - **The dashboard's "Closed" list** is per browser. Closed accounts are deleted onchain and leave only their transaction history.
 - **OG images** fetch a CJK font subset from Google Fonts while rendering. If that fails, they fall back to Latin-only text.
@@ -256,7 +254,6 @@ Potential next features. None of these are promises, and ideas are welcome: open
 - [ ] **Gas tank:** the sender optionally pre-pays their guests' claim fees, so the operator's relayer is paid back per claim and the unused amount is refunded.
 - [ ] **Kora** as the fee-payer service instead of the custom relayer (the relayer interface was designed for this swap).
 - [ ] **Phone app**: package as a PWA for the Solana dApp Store (Seeker).
-- [ ] **Blinks on X**: register with the Actions registry so claim buttons unfurl in posts.
 
 ## Project structure
 
@@ -266,7 +263,6 @@ anchor/programs/angpao/tests/ LiteSVM tests
 app/
   create/  a/[id]/  dashboard/          pages (a/[id] also has opengraph-image + metadata)
   api/claim/{build,submit}              gasless relayer
-  api/actions/angpao/[id]  actions.json Blink
   api/pay/claim                         Solana Pay transaction request
   api/price  api/relayer                CoinGecko proxy, public relayer info
   generated/angpao/                     Codama client (generated, don't edit)
