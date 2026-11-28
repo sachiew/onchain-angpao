@@ -3,6 +3,7 @@ import { Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./components/providers";
 import { SiteHeader } from "./components/site-header";
+import { SiteFooter } from "./components/site-footer";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
   title: { default: "Onchain Angpao", template: "%s · Onchain Angpao" },
   description:
-    "Send red packets on Solana. Lucky or equal splits, claimed straight into any wallet, no gas needed.",
+    "Send red packets to friends and family on Solana. Lucky or equal splits, free instant wallets for first-timers, no gas needed.",
   icons: { icon: "/icon.svg", shortcut: "/icon.svg", apple: "/icon.svg" },
 };
 
@@ -48,6 +49,7 @@ export default function RootLayout({
         <Providers>
           <SiteHeader />
           <main className="mx-auto w-full max-w-5xl px-4 pb-16">{children}</main>
+          <SiteFooter />
         </Providers>
       </body>
     </html>

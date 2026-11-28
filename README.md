@@ -2,7 +2,11 @@
 
 Send red packets (angpao / hongbao / duit raya) on Solana. Pick a total, a number of packets, **Lucky** or **Equal** split and a greeting. Share a link, QR or Blink. Friends open a themed envelope and claim straight into a Solana wallet, even a brand-new one with **0 SOL**, because claims are **gasless**.
 
-> 🎬 _Demo GIF goes here (`docs/demo.gif`)._
+<p align="center">
+  <img src="docs/demo.gif" width="320" alt="Create an angpao, open it on a phone, claim with a free instant wallet, then watch the live feed sell out with a crown on the luckiest packet" />
+  <br />
+  <sub>Real devnet run: free instant wallet, gasless claim, live feed, sold out with 👑. <a href="https://onchain-angpao.vercel.app">Try it live</a>.</sub>
+</p>
 
 - **Lucky or Equal splits** up to 50 packets, with amounts fixed onchain at creation. Lucky uses the "double average" draw.
 - **Gasless claims.** A relayer pays the fee and only ever signs one exact transaction shape.

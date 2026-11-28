@@ -17,7 +17,9 @@ export function SiteHeader() {
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-3 px-4">
           <Link href="/" className="flex items-center gap-2 font-bold tracking-tight">
             <span aria-hidden className="text-xl">🧧</span>
-            <span>Onchain Angpao</span>
+            <span className="whitespace-nowrap">
+              <span className="hidden min-[440px]:inline">Onchain </span>Angpao
+            </span>
           </Link>
           <nav className="flex items-center gap-2">
             <Link href="/create" className="hidden rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent sm:block">

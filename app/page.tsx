@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Envelope } from "./components/envelope";
 import { THEMES } from "./lib/themes";
+import { NETWORK } from "./lib/config";
 
 /** Simple 24×24 stroke icons (original, no icon library). */
 const ICONS = {
@@ -28,7 +29,27 @@ const ICONS = {
 const STEPS = [
   { n: 1, icon: ICONS.packet, title: "Fill it", body: "Pick a total, how many packets, Lucky or Equal, and a greeting." },
   { n: 2, icon: ICONS.share, title: "Share it", body: "Send the link, QR or Blink to your group chat." },
-  { n: 3, icon: ICONS.rush, title: "Friends rush in", body: "They open the envelope and claim into any wallet. No gas needed." },
+  {
+    n: 3,
+    icon: ICONS.rush,
+    title: "Friends & family rush in",
+    body: "They open the envelope and claim in seconds. No wallet yet? They get a free one instantly. No gas needed.",
+  },
+];
+
+/** Privy (email/Google wallets) is optional; without it, first-timers get an in-browser wallet. */
+const SOCIAL_WALLETS = !!process.env.NEXT_PUBLIC_PRIVY_APP_ID;
+
+const NO_WALLET_POINTS = [
+  {
+    emoji: "✨",
+    title: "Free wallet in one tap",
+    body: SOCIAL_WALLETS
+      ? "We create one instantly, linked to their email or Google account."
+      : "We create one instantly in their browser. No app or sign-up.",
+  },
+  { emoji: "⛽", title: "Zero fees to claim", body: "We cover the network fee, so a brand-new wallet with 0 SOL works." },
+  { emoji: "📱", title: "Works on any phone", body: "Scan the QR or tap the link. Nothing to install." },
 ];
 
 export default function Home() {
@@ -36,18 +57,26 @@ export default function Home() {
     <div className="flex flex-col gap-16 pt-10 sm:pt-16">
       <section className="grid items-center gap-10 md:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-6">
-          <p className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted">
-            Red packets on Solana
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted">
+              Red packets on Solana
+            </p>
+            {NETWORK !== "mainnet" && (
+              <p className="inline-flex items-center gap-1.5 rounded-full border border-[#f6a945]/40 bg-[#f6a945]/10 px-3 py-1 text-xs font-semibold text-[#f6a945]">
+                <span aria-hidden>🐐</span> Mainnet coming soon this GOAT CNY 2027
+              </p>
+            )}
+          </div>
           <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
             Send an angpao.
             <br />
             <span className="bg-gradient-to-r from-[#e63946] to-[#f6a945] bg-clip-text text-transparent">
-              Let friends race for it.
+              Let friends &amp; family race for it.
             </span>
           </h1>
           <p className="max-w-md text-lg text-muted">
-            Split SOL into lucky or equal packets. Friends claim straight into a wallet, even a brand-new one with zero balance.
+            Split SOL into lucky or equal packets. Your friends and family claim in seconds, even if they&apos;ve never
+            touched crypto.
           </p>
           <div className="flex flex-wrap gap-3">
             <Link
@@ -64,6 +93,27 @@ export default function Home() {
         <div className="mx-auto w-56 sm:w-72">
           <Envelope theme={THEMES[0]} amountLabel="$88.00" subLabel="8 packets · Lucky" message="Huat ah! 恭喜发财" />
         </div>
+      </section>
+
+      <section className="relative overflow-hidden rounded-3xl border border-[#f6a945]/30 bg-gradient-to-br from-[#c8102e]/10 via-transparent to-[#f6a945]/10 p-6 sm:p-8">
+        <p className="text-xs font-semibold uppercase tracking-wider text-[#e63946]">New to crypto?</p>
+        <h2 className="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">No wallet? No problem.</h2>
+        <p className="mt-2 max-w-xl text-muted">
+          Grandma, your cousins, the office group chat: anyone can claim, even with zero onchain experience.
+        </p>
+        <ul className="mt-6 grid gap-4 sm:grid-cols-3">
+          {NO_WALLET_POINTS.map((p) => (
+            <li key={p.title} className="flex gap-3">
+              <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-card text-xl shadow-sm">
+                {p.emoji}
+              </span>
+              <div>
+                <h3 className="font-bold">{p.title}</h3>
+                <p className="text-sm text-muted">{p.body}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section>

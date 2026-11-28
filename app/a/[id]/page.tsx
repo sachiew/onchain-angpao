@@ -204,7 +204,11 @@ function ClaimView({ pda }: { pda: Address }) {
                   connecting={status === "connecting"}
                   onInstant={onCreateInstant}
                   instantBusy={creating || isClaiming}
-                  instantLabel={instant.provider === "privy" ? "Sign in with email or Google" : "No app needed. Takes 1 second"}
+                  instantLabel={
+                    instant.provider === "privy"
+                      ? "New to crypto? Free wallet with your email or Google. No fees."
+                      : "New to crypto? Free wallet in 1 second. No app, no fees."
+                  }
                 />
               )}
             </div>
@@ -290,7 +294,7 @@ function WalletChoice({
         disabled={instantBusy}
         className="w-full rounded-xl bg-white py-3.5 text-center text-base font-extrabold text-black shadow-lg transition active:scale-[0.98] disabled:opacity-70"
       >
-        {instantBusy ? "Creating wallet & claiming…" : "⚡ Create wallet instantly"}
+        {instantBusy ? "Creating wallet & claiming…" : "⚡ Claim with a free instant wallet"}
         <span className="block text-[11px] font-semibold opacity-60">{instantLabel}</span>
       </button>
 
