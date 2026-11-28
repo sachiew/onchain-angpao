@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { getCancelInstruction, getRefundAndCloseInstruction, SplitMode } from "../generated/angpao";
+import { GateKind, getCancelInstruction, getRefundAndCloseInstruction, SplitMode } from "../generated/angpao";
 import { PROGRAM_ADDRESS } from "../lib/config";
 import { useWallet } from "../lib/wallet/context";
 import { useSendTransaction } from "../lib/hooks/use-send-transaction";
@@ -12,6 +12,7 @@ import { useFiat, usePrices } from "../lib/hooks/use-prices";
 import { useNow } from "../lib/hooks/use-now";
 import { useCluster } from "../components/cluster-context";
 import { CurrencySelect } from "../components/currency-select";
+import { ShareSheet } from "../components/share-sheet";
 import { angpaoStatus } from "../lib/angpao";
 import { countdownT, useLang, useT } from "../lib/i18n";
 import { formatFiat, fiatCodeFromBytes, fromMinor } from "../lib/fiat";
@@ -111,6 +112,17 @@ function Row({ a, fiat, onDone }: { a: MyAngpao; fiat: ReturnType<typeof useFiat
   // What comes back on close: unclaimed packets + the rent deposit (all the account's lamports).
   const canRefund = expired || soldOut;
   const canCancel = !canRefund && d.claimedCount === 0;
+  // Sharing makes sense while packets are still claimable.
+  const canShare = !expired && !soldOut;
+  const [sharing, setSharing] = useState(false);
+  const url = typeof window !== "undefined" ? `${window.location.origin}/a/${a.address}` : `/a/${a.address}`;
+  const shareText = t.create.shareText(
+    theme.emoji,
+    atCreation ?? `${formatSol(d.totalLamports)} SOL`,
+    d.numPackets,
+    d.mode === SplitMode.Lucky ? t.common.lucky : t.common.equal,
+    d.message,
+  );
 
   async function close(kind: "refund" | "cancel") {
     if (!signer) return;
@@ -131,7 +143,7 @@ function Row({ a, fiat, onDone }: { a: MyAngpao; fiat: ReturnType<typeof useFiat
   const pct = (d.claimedCount / d.numPackets) * 100;
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-4">
+    <div className="min-w-0 rounded-2xl border border-border bg-card p-4">
       <div className="flex items-start gap-3">
         <span
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl"
@@ -175,6 +187,15 @@ function Row({ a, fiat, onDone }: { a: MyAngpao; fiat: ReturnType<typeof useFiat
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
+        {canShare && (
+          <button
+            onClick={() => setSharing((v) => !v)}
+            aria-expanded={sharing}
+            className="rounded-lg bg-[#c8102e] px-3 py-2 text-xs font-bold text-white transition hover:brightness-110"
+          >
+            {sharing ? t.dash.hideShare : `📤 ${t.dash.share}`}
+          </button>
+        )}
         {canRefund && (
           <button
             onClick={() => close("refund")}
@@ -203,6 +224,12 @@ function Row({ a, fiat, onDone }: { a: MyAngpao; fiat: ReturnType<typeof useFiat
           {t.wallet.explorer}
         </a>
       </div>
+
+      {canShare && sharing && (
+        <div className="mt-4 border-t border-border-low pt-4">
+          <ShareSheet url={url} text={shareText} angpao={a.address} passphraseGated={d.gateKind === GateKind.Passphrase} />
+        </div>
+      )}
     </div>
   );
 }

@@ -40,7 +40,7 @@ const en = {
     pill: "Red packets on Solana",
     mainnetSoon: "Mainnet coming soon this GOAT CNY 2027",
     h1a: "Send an angpao.",
-    h1b: "Let friends & family race for it.",
+    h1b: "Let friends & family race for blessings.",
     tagline: "发红包，抢好运！",
     sub: "Split SOL into lucky or equal packets. Your friends and family claim in seconds, even if they've never touched crypto.",
     ethos: "Angpao is more than red envelopes. It’s a gesture of care, respect, and blessings.",
@@ -61,7 +61,7 @@ const en = {
     howItWorks: "How it works",
     steps: [
       { title: "Fill it", body: "Pick a total, how many packets, Lucky or Equal, and a greeting." },
-      { title: "Share it", body: "Send the link, QR or Blink to your group chat." },
+      { title: "Share it", body: "Send the link, QR or Blink to your group chat, or show it at a physical event." },
       { title: "Friends & family rush in", body: "They open the envelope and claim in seconds. No wallet yet? They get a free one instantly. No gas needed." },
     ],
     whatsNext: "What's next",
@@ -239,6 +239,8 @@ const en = {
     refundAtExpiry: "Refund opens at expiry",
     cancelConfirm: "Cancel this angpao and take the full amount back? The link will stop working.",
     returned: (sol: string) => `${sol} SOL returned to your wallet`,
+    share: "Share",
+    hideShare: "Hide sharing",
   },
 };
 
@@ -266,7 +268,7 @@ const zh: Dict = {
     pill: "Solana 上的红包",
     mainnetSoon: "主网即将上线，2027 羊年春节见",
     h1a: "发个红包。",
-    h1b: "让亲朋好友一起抢！",
+    h1b: "让亲朋好友一起抢福气！",
     tagline: "发红包，抢好运！",
     sub: "把 SOL 分成拼手气或普通红包。亲朋好友几秒就能领取，就算从没接触过加密货币也没问题。",
     ethos: "红包不只是红色的信封，更是一份关怀、尊重与祝福的心意。",
@@ -287,7 +289,7 @@ const zh: Dict = {
     howItWorks: "怎么玩",
     steps: [
       { title: "包红包", body: "设定总金额、红包个数、拼手气或普通红包，再写一句祝福。" },
-      { title: "发出去", body: "把链接、二维码或 Blink 发到群里。" },
+      { title: "发出去", body: "把链接、二维码或 Blink 发到群里，或在线下活动现场展示。" },
       { title: "亲朋好友来抢", body: "打开红包，几秒就领到。还没有钱包？立即免费送一个，无需手续费。" },
     ],
     whatsNext: "接下来",
@@ -464,6 +466,8 @@ const zh: Dict = {
     refundAtExpiry: "过期后可退款",
     cancelConfirm: "确定取消这个红包并取回全部金额吗？链接将会失效。",
     returned: (sol: string) => `${sol} SOL 已退回你的钱包`,
+    share: "分享",
+    hideShare: "收起分享",
   },
 };
 
