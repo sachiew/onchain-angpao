@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "../lib/i18n";
 import { useState, useRef, useEffect } from "react";
 import { useWallet } from "../lib/wallet/context";
 import { useBalance } from "../lib/hooks/use-balance";
@@ -12,6 +13,7 @@ export function WalletButton() {
     useWallet();
 
   const { getExplorerUrl } = useCluster();
+  const t = useT();
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -46,7 +48,8 @@ export function WalletButton() {
           onClick={() => (isOpen ? close() : open())}
           className="cursor-pointer whitespace-nowrap rounded-lg bg-primary px-3 py-2 text-xs font-medium sm:px-4 text-primary-foreground shadow-xs transition hover:bg-primary/90"
         >
-          Connect Wallet
+          <span className="sm:hidden">{t.nav.connectShort}</span>
+          <span className="hidden sm:inline">{t.nav.connect}</span>
         </button>
 
         {isOpen && (
@@ -83,7 +86,7 @@ export function WalletButton() {
               ))}
             </div>
             {status === "connecting" && (
-              <p className="mt-2 text-xs text-muted">Connecting...</p>
+              <p className="mt-2 text-xs text-muted">{t.wallet.connecting}</p>
             )}
             {error != null && (
               <p className="mt-2 text-xs text-destructive">
@@ -109,7 +112,7 @@ export function WalletButton() {
       {isOpen && (
         <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border border-border-low bg-card p-4 shadow-lg">
           <div className="mb-3">
-            <p className="text-xs text-muted">Balance</p>
+            <p className="text-xs text-muted">{t.wallet.balance}</p>
             <p className="text-lg font-bold tabular-nums">
               {balance.lamports != null
                 ? lamportsToSolString(balance.lamports)
@@ -127,7 +130,7 @@ export function WalletButton() {
               onClick={handleCopy}
               className="flex-1 cursor-pointer rounded-lg border border-border-low bg-card px-3 py-2 text-xs font-medium transition hover:bg-cream"
             >
-              {copied ? "Copied!" : "Copy address"}
+              {copied ? t.wallet.copied : t.wallet.copyAddress}
             </button>
             <a
               href={getExplorerUrl(`/address/${address}`)}
@@ -135,7 +138,7 @@ export function WalletButton() {
               rel="noopener noreferrer"
               className="flex-1 rounded-lg border border-border-low bg-card px-3 py-2 text-center text-xs font-medium transition hover:bg-cream"
             >
-              Explorer
+              {t.wallet.explorer}
             </a>
           </div>
 
@@ -146,7 +149,7 @@ export function WalletButton() {
             }}
             className="mt-2 w-full cursor-pointer rounded-lg border border-border-low bg-card px-3 py-2 text-xs font-medium text-destructive transition hover:bg-destructive/10"
           >
-            Disconnect
+            {t.wallet.disconnect}
           </button>
         </div>
       )}

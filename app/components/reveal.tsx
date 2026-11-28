@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from "motion/react";
 import confetti from "canvas-confetti";
 import type { Theme } from "../lib/themes";
 import { haptic } from "./open-envelope";
+import { useT } from "../lib/i18n";
 
 /** "You got RM 8.88!" with a confetti burst in the theme's colours (skipped for reduced motion). */
 export function Reveal({
@@ -21,6 +22,7 @@ export function Reveal({
   luckiest?: boolean;
 }) {
   const reduce = useReducedMotion();
+  const t = useT();
 
   useEffect(() => {
     if (!celebrate) return;
@@ -37,7 +39,7 @@ export function Reveal({
 
   return (
     <div className="space-y-2 py-4 text-center">
-      <p className="text-sm font-semibold uppercase tracking-widest opacity-80">{luckiest ? "👑 Luckiest packet!" : "You got"}</p>
+      <p className="text-sm font-semibold uppercase tracking-widest opacity-80">{luckiest ? t.claim.luckiest : t.claim.youGot}</p>
       <motion.p
         initial={reduce || !celebrate ? false : { scale: 0.4, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}

@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
+import { useT } from "../lib/i18n";
 
 const subscribe = () => () => {};
 
@@ -14,12 +15,13 @@ export function ThemeToggle() {
   );
 
   const isDark = resolvedTheme === "dark";
+  const t = useT();
 
   return (
     <button
       onClick={() => setTheme(isDark ? "light" : "dark")}
       className="inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-border-low bg-card text-sm transition hover:bg-cream"
-      aria-label="Toggle theme"
+      aria-label={t.wallet.toggleTheme}
     >
       {mounted ? (
         isDark ? (

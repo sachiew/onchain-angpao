@@ -27,7 +27,8 @@ import { BurnerPanel } from "../../components/burner-panel";
 import { CoinGeckoAttribution } from "../../components/coingecko-attribution";
 import { getTheme } from "../../lib/themes";
 import { angpaoStatus } from "../../lib/angpao";
-import { buildFeed, claimOf, countdown } from "../../lib/feed";
+import { buildFeed, claimOf } from "../../lib/feed";
+import { countdownT, useLang, useT, type Dict } from "../../lib/i18n";
 import { formatSol, lamportsToSol } from "../../lib/split";
 import { fiatCodeFromBytes, formatFiat, fromMinor } from "../../lib/fiat";
 import { angpaoErrorCode, parseTransactionError } from "../../lib/errors";
@@ -37,7 +38,8 @@ import { GaslessError, type ClaimSigner } from "../../lib/gasless";
 export default function AngpaoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const pda: Address | null = isAddress(id) ? address(id) : null;
-  if (!pda) return <Centered>That link doesn’t look right.</Centered>;
+  const t = useT();
+  if (!pda) return <Centered>{t.claim.badLink}</Centered>;
   return <ClaimView pda={pda} />;
 }
 
@@ -55,19 +57,21 @@ function ClaimView({ pda }: { pda: Address }) {
   const [justClaimed, setJustClaimed] = useState(false);
   const [creating, setCreating] = useState(false);
   const [passphrase, setPassphrase] = useState("");
+  const t = useT();
+  const [lang] = useLang();
 
   // `undefined` = not loaded yet (or the RPC failed); `null` = the account really doesn't exist.
   if (data === undefined)
     return (
       <Centered>
-        {error && !isLoading ? "Couldn't reach the Solana network. Retrying…" : "Loading angpao…"}
+        {error && !isLoading ? t.claim.offline : t.claim.loading}
       </Centered>
     );
   if (data === null)
     return (
       <Centered>
-        <p className="text-lg font-semibold text-foreground">This angpao is gone 🍃</p>
-        <p className="mt-1">It doesn’t exist, or the sender has already closed it.</p>
+        <p className="text-lg font-semibold text-foreground">{t.claim.goneTitle}</p>
+        <p className="mt-1">{t.claim.goneBody}</p>
       </Centered>
     );
 
@@ -83,7 +87,7 @@ function ClaimView({ pda }: { pda: Address }) {
   const createdValue =
     createdFiat && data.fiatTotalMinor > 0n ? formatFiat(fromMinor(data.fiatTotalMinor, createdFiat), createdFiat) : null;
   const headline = createdValue ?? `${formatSol(data.totalLamports)} SOL`;
-  const modeLabel = data.mode === SplitMode.Lucky ? "Lucky" : "Equal";
+  const modeLabel = data.mode === SplitMode.Lucky ? t.common.lucky : t.common.equal;
   const claimable = !mine && !soldOut && !expired;
   const showOpen = opened || !!mine;
   const needsPassphrase = data.gateKind === GateKind.Passphrase;
@@ -100,22 +104,22 @@ function ClaimView({ pda }: { pda: Address }) {
   }
 
   async function onClaim(claimer: ClaimSigner) {
-    if (needsPassphrase && !passphrase.trim()) return toast.error("Enter the passphrase first");
+    if (needsPassphrase && !passphrase.trim()) return toast.error(t.claim.enterPassFirst);
     try {
       await claim(claimer, needsPassphrase ? passphrase : undefined);
       setJustClaimed(true);
-      if (!(await awaitClaim(claimer.address))) toast("Submitted! It’s taking a while to confirm, so hang tight.");
+      if (!(await awaitClaim(claimer.address))) toast(t.claim.slowConfirm);
     } catch (e) {
       const code = angpaoErrorCode(e);
       const gcode = e instanceof GaslessError ? e.code : undefined;
       if (code === ANGPAO_ERROR__ALREADY_CLAIMED || gcode === "AlreadyClaimed") {
         await mutate();
-        toast("You already claimed this one 😉");
+        toast(t.claim.alreadyClaimed);
       } else if (code === ANGPAO_ERROR__SOLD_OUT || gcode === "SoldOut") {
         await mutate();
-        toast.error("So close! The last packet was just taken.");
+        toast.error(t.claim.soClose);
       } else if (code === ANGPAO_ERROR__EXPIRED || gcode === "Expired") {
-        toast.error("This angpao just expired.");
+        toast.error(t.claim.justExpired);
       } else {
         toast.error(e instanceof GaslessError ? e.message : parseTransactionError(e));
       }
@@ -128,7 +132,7 @@ function ClaimView({ pda }: { pda: Address }) {
       const s = await instant.create();
       await onClaim(s);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Couldn’t create a wallet");
+      toast.error(e instanceof Error ? e.message : t.claim.walletFailed);
     } finally {
       setCreating(false);
     }
@@ -142,10 +146,10 @@ function ClaimView({ pda }: { pda: Address }) {
       {/* Status strip */}
       <div className="flex items-center justify-between text-sm">
         <span className="font-semibold">
-          {soldOut ? "Sold out" : expired ? "Expired" : `${left} / ${data.numPackets} left`}
+          {soldOut ? t.claim.soldOut : expired ? t.common.expired : t.claim.left(left, data.numPackets)}
         </span>
         <span className="flex items-center gap-2 text-muted">
-          {!soldOut && !expired && <span className="tabular-nums">⏳ {countdown(Number(data.expiryTs) - now)}</span>}
+          {!soldOut && !expired && <span className="tabular-nums">⏳ {countdownT(t, Number(data.expiryTs) - now, lang)}</span>}
           <CurrencySelect />
         </span>
       </div>
@@ -163,7 +167,7 @@ function ClaimView({ pda }: { pda: Address }) {
           open={showOpen}
           onOpen={() => setOpened(true)}
           closedLabel={headline}
-          subLabel={`${data.numPackets} packets · ${modeLabel}`}
+          subLabel={`${t.common.packets(data.numPackets)} · ${modeLabel}`}
           message={data.message}
           canOpen={claimable}
         >
@@ -171,30 +175,30 @@ function ClaimView({ pda }: { pda: Address }) {
             <Reveal
               theme={theme}
               primary={toFiat(mine.amount) ?? `${formatSol(mine.amount, 6)} SOL`}
-              secondary={toFiat(mine.amount) ? `${formatSol(mine.amount, 6)} SOL · in your wallet` : "in your wallet"}
+              secondary={toFiat(mine.amount) ? `${formatSol(mine.amount, 6)} SOL · ${t.claim.inYourWallet}` : t.claim.inYourWallet}
               celebrate={justClaimed}
               luckiest={mine.luckiest}
             />
           ) : (
             <div className="space-y-4 py-2 text-center">
               <p className="text-lg font-bold leading-snug">{data.message}</p>
-              {inviteOnly && <p className="text-xs opacity-85">🔒 Invite-only: only wallets on the sender’s list can claim.</p>}
+              {inviteOnly && <p className="text-xs opacity-85">{t.claim.inviteOnly}</p>}
               {needsPassphrase && (
                 <input
                   value={passphrase}
                   onChange={(e) => setPassphrase(e.target.value)}
-                  placeholder="Passphrase from the sender"
+                  placeholder={t.claim.passPlaceholder}
                   className="w-full rounded-xl bg-white/90 px-4 py-3 text-center text-sm font-semibold text-black outline-none placeholder:text-black/40"
                 />
               )}
               {active ? (
                 <div className="space-y-2">
                   <button onClick={() => onClaim(active)} disabled={isClaiming} className={primaryBtn}>
-                    {isClaiming ? "Claiming…" : "Claim my packet 🧧"}
+                    {isClaiming ? t.claim.claiming : t.claim.claimMine}
                   </button>
                   <p className="text-[11px] opacity-80">
-                    into {active.label} {ellipsify(active.address, 4)}
-                    {gasless !== false ? " · no gas needed" : ""}
+                    {t.claim.into(active.kind === "wallet" ? active.label : t.claim.instantLabel, ellipsify(active.address, 4))}
+                    {gasless !== false ? t.claim.noGas : ""}
                   </p>
                 </div>
               ) : (
@@ -204,11 +208,8 @@ function ClaimView({ pda }: { pda: Address }) {
                   connecting={status === "connecting"}
                   onInstant={onCreateInstant}
                   instantBusy={creating || isClaiming}
-                  instantLabel={
-                    instant.provider === "privy"
-                      ? "New to crypto? Free wallet with your email or Google. No fees."
-                      : "New to crypto? Free wallet in 1 second. No app, no fees."
-                  }
+                  instantLabel={instant.provider === "privy" ? t.claim.instantSocial : t.claim.instantBurner}
+                  t={t}
                 />
               )}
             </div>
@@ -217,10 +218,10 @@ function ClaimView({ pda }: { pda: Address }) {
       ) : (
         <div className="space-y-4 text-center">
           <div className="mx-auto w-56 opacity-80 grayscale-[35%]">
-            <Envelope theme={theme} amountLabel={headline} subLabel={`${data.numPackets} packets · ${modeLabel}`} float={false} />
+            <Envelope theme={theme} amountLabel={headline} subLabel={`${t.common.packets(data.numPackets)} · ${modeLabel}`} float={false} />
           </div>
           <p className="text-lg font-bold">
-            {soldOut ? "All packets claimed. Better luck next time!" : "This angpao has expired."}
+            {soldOut ? t.claim.allClaimed : t.claim.hasExpired}
           </p>
         </div>
       )}
@@ -230,9 +231,9 @@ function ClaimView({ pda }: { pda: Address }) {
       {/* Value: at creation vs now */}
       <div className="space-y-1 text-center text-xs text-muted">
         <p>
-          {formatSol(data.totalLamports)} SOL total
-          {createdValue ? ` · ${createdValue} at creation` : ""}
-          {toFiat(data.totalLamports) ? ` · ${toFiat(data.totalLamports)} now` : ""}
+          {t.claim.solTotal(formatSol(data.totalLamports))}
+          {createdValue ? t.claim.atCreation(createdValue) : ""}
+          {toFiat(data.totalLamports) ? t.claim.now(toFiat(data.totalLamports)!) : ""}
         </p>
         <CoinGeckoAttribution />
       </div>
@@ -240,9 +241,9 @@ function ClaimView({ pda }: { pda: Address }) {
       {/* Live feed */}
       <section className="rounded-2xl border border-border bg-card">
         <header className="flex items-center justify-between border-b border-border-low px-4 py-3">
-          <h2 className="text-sm font-bold">Live claims</h2>
+          <h2 className="text-sm font-bold">{t.claim.liveClaims}</h2>
           <span className="flex items-center gap-1.5 text-xs text-muted">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" /> live
+            <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" /> {t.claim.live}
           </span>
         </header>
         <div className="px-2">
@@ -255,13 +256,14 @@ function ClaimView({ pda }: { pda: Address }) {
           href="/dashboard"
           className="block rounded-xl border border-border bg-card px-4 py-3 text-center text-sm font-semibold hover:bg-accent"
         >
-          You sent this angpao · {soldOut || expired ? "Refund & close on your dashboard →" : "Manage on your dashboard →"}
+          {t.claim.youSent}
+          {soldOut || expired ? t.claim.refundOnDash : t.claim.manageOnDash}
         </Link>
       )}
 
       <p className="text-center text-xs">
         <a className="text-muted underline" target="_blank" rel="noopener noreferrer" href={getExplorerUrl(`/address/${pda}`)}>
-          View onchain
+          {t.common.viewOnchain}
         </a>
       </p>
     </div>
@@ -275,6 +277,7 @@ function WalletChoice({
   onInstant,
   instantBusy,
   instantLabel,
+  t,
 }: {
   connectors: { id: string; name: string; icon?: string }[];
   connect: (id: string) => Promise<void>;
@@ -282,6 +285,7 @@ function WalletChoice({
   onInstant: () => void;
   instantBusy: boolean;
   instantLabel: string;
+  t: Dict;
 }) {
   const here = typeof window !== "undefined" ? window.location.href : "";
   const enc = encodeURIComponent(here);
@@ -294,12 +298,12 @@ function WalletChoice({
         disabled={instantBusy}
         className="w-full rounded-xl bg-white py-3.5 text-center text-base font-extrabold text-black shadow-lg transition active:scale-[0.98] disabled:opacity-70"
       >
-        {instantBusy ? "Creating wallet & claiming…" : "⚡ Claim with a free instant wallet"}
+        {instantBusy ? t.claim.instantBusy : t.claim.instantCta}
         <span className="block text-[11px] font-semibold opacity-60">{instantLabel}</span>
       </button>
 
       <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider opacity-70">
-        <span className="h-px flex-1 bg-current opacity-30" /> or use your wallet <span className="h-px flex-1 bg-current opacity-30" />
+        <span className="h-px flex-1 bg-current opacity-30" /> {t.claim.orWallet} <span className="h-px flex-1 bg-current opacity-30" />
       </div>
 
       {connectors.length > 0 ? (
@@ -320,7 +324,7 @@ function WalletChoice({
           </a>
         </div>
       )}
-      <p className="text-center text-[11px] opacity-75">No SOL needed for fees. We cover them.</p>
+      <p className="text-center text-[11px] opacity-75">{t.claim.weCoverFees}</p>
     </div>
   );
 }

@@ -13,7 +13,7 @@ import { useNow } from "../lib/hooks/use-now";
 import { useCluster } from "../components/cluster-context";
 import { CurrencySelect } from "../components/currency-select";
 import { angpaoStatus } from "../lib/angpao";
-import { countdown } from "../lib/feed";
+import { countdownT, useLang, useT } from "../lib/i18n";
 import { formatFiat, fiatCodeFromBytes, fromMinor } from "../lib/fiat";
 import { formatSol, lamportsToSol } from "../lib/split";
 import { getTheme } from "../lib/themes";
@@ -26,6 +26,7 @@ export default function DashboardPage() {
   const { data, error, isLoading, mutate } = useMyAngpaos(creator);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [fiat] = useFiat();
+  const t = useT();
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is client-only
@@ -35,8 +36,8 @@ export default function DashboardPage() {
   if (status !== "connected" || !creator) {
     return (
       <div className="mx-auto max-w-md pt-16 text-center">
-        <h1 className="text-3xl font-extrabold tracking-tight">Your angpaos</h1>
-        <p className="mt-3 text-muted">Connect the wallet you created angpaos with to see claims and refund leftovers.</p>
+        <h1 className="text-3xl font-extrabold tracking-tight">{t.dash.title}</h1>
+        <p className="mt-3 text-muted">{t.dash.connect}</p>
       </div>
     );
   }
@@ -47,22 +48,22 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6 pt-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-extrabold tracking-tight">Your angpaos</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight">{t.dash.title}</h1>
         <div className="flex items-center gap-2">
           <CurrencySelect />
           <Link href="/create" className="rounded-xl bg-[#c8102e] px-4 py-2 text-sm font-bold text-white">
-            + New
+            {t.dash.new}
           </Link>
         </div>
       </div>
 
-      {error && <p className="text-sm text-destructive">Couldn&apos;t load from the network. Retrying…</p>}
-      {isLoading && <p className="text-muted">Loading…</p>}
+      {error && <p className="text-sm text-destructive">{t.dash.loadError}</p>}
+      {isLoading && <p className="text-muted">{t.dash.loading}</p>}
       {data && data.length === 0 && closed.length === 0 && (
         <div className="rounded-2xl border border-dashed border-border p-10 text-center text-muted">
-          No angpaos yet.{" "}
+          {t.dash.empty}{" "}
           <Link href="/create" className="font-semibold text-foreground underline">
-            Create one
+            {t.dash.createOne}
           </Link>
         </div>
       )}
@@ -75,12 +76,12 @@ export default function DashboardPage() {
 
       {closed.length > 0 && (
         <div>
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Closed</h2>
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">{t.dash.closed}</h2>
           <div className="grid gap-2">
             {closed.map((h) => (
               <div key={h.angpao} className="flex items-center justify-between rounded-xl border border-border px-4 py-3 text-sm text-muted">
                 <span className="truncate">{h.label}</span>
-                <span className="shrink-0 pl-3">Refunded &amp; closed</span>
+                <span className="shrink-0 pl-3">{t.dash.refunded}</span>
               </div>
             ))}
           </div>
@@ -96,6 +97,8 @@ function Row({ a, fiat, onDone }: { a: MyAngpao; fiat: ReturnType<typeof useFiat
   const { getExplorerUrl } = useCluster();
   const { prices } = usePrices();
   const now = useNow();
+  const t = useT();
+  const [lang] = useLang();
   const d = a.data;
   const theme = getTheme(d.theme);
   const { left, expired, soldOut, claimedLamports } = angpaoStatus(d, now);
@@ -111,14 +114,14 @@ function Row({ a, fiat, onDone }: { a: MyAngpao; fiat: ReturnType<typeof useFiat
 
   async function close(kind: "refund" | "cancel") {
     if (!signer) return;
-    if (kind === "cancel" && !confirm("Cancel this angpao and take the full amount back? The link will stop working.")) return;
+    if (kind === "cancel" && !confirm(t.dash.cancelConfirm)) return;
     try {
       const ix =
         kind === "refund"
           ? getRefundAndCloseInstruction({ creator: signer, angpao: a.address }, { programAddress: PROGRAM_ADDRESS })
           : getCancelInstruction({ creator: signer, angpao: a.address }, { programAddress: PROGRAM_ADDRESS });
       await send({ instructions: [ix] });
-      toast.success(`${formatSol(a.lamports)} SOL returned to your wallet`);
+      toast.success(t.dash.returned(formatSol(a.lamports)));
       onDone();
     } catch (e) {
       toast.error(parseTransactionError(e));
@@ -139,13 +142,13 @@ function Row({ a, fiat, onDone }: { a: MyAngpao; fiat: ReturnType<typeof useFiat
         </span>
         <div className="min-w-0 flex-1">
           <Link href={`/a/${a.address}`} className="line-clamp-1 font-semibold hover:underline">
-            {d.message || theme.name}
+            {d.message || t.themes[d.theme] || theme.name}
           </Link>
           <p className="text-xs text-muted">
             {atCreation ?? `${formatSol(d.totalLamports)} SOL`}
-            {atCreation && fiatNow(d.totalLamports) && createdCode === fiat ? ` at creation · ${fiatNow(d.totalLamports)} now` : ""}
+            {atCreation && fiatNow(d.totalLamports) && createdCode === fiat ? t.dash.atCreationNow(fiatNow(d.totalLamports)!) : ""}
             {" · "}
-            {d.mode === SplitMode.Lucky ? "Lucky" : "Equal"}
+            {d.mode === SplitMode.Lucky ? t.common.lucky : t.common.equal}
           </p>
         </div>
         <span
@@ -153,14 +156,14 @@ function Row({ a, fiat, onDone }: { a: MyAngpao; fiat: ReturnType<typeof useFiat
             soldOut ? "bg-emerald-500/15 text-emerald-600" : expired ? "bg-amber-500/15 text-amber-600" : "bg-accent text-muted"
           }`}
         >
-          {soldOut ? "Sold out" : expired ? "Expired" : countdown(Number(d.expiryTs) - now)}
+          {soldOut ? t.dash.soldOut : expired ? t.dash.expired : countdownT(t, Number(d.expiryTs) - now, lang)}
         </span>
       </div>
 
       <div className="mt-3">
         <div className="flex justify-between text-sm">
           <span className="font-semibold tabular-nums">
-            {d.claimedCount}/{d.numPackets} claimed
+            {t.dash.claimed(d.claimedCount, d.numPackets)}
           </span>
           <span className="text-muted tabular-nums">
             {formatSol(claimedLamports)} SOL{fiatNow(claimedLamports) ? ` · ${fiatNow(claimedLamports)}` : ""}
@@ -178,7 +181,7 @@ function Row({ a, fiat, onDone }: { a: MyAngpao; fiat: ReturnType<typeof useFiat
             disabled={isSending}
             className="rounded-lg bg-foreground px-3 py-2 text-xs font-bold text-background disabled:opacity-50"
           >
-            {isSending ? "Confirm in wallet…" : `Refund & close · ${formatSol(a.lamports)} SOL`}
+            {isSending ? t.dash.confirming : t.dash.refund(formatSol(a.lamports))}
           </button>
         )}
         {canCancel && (
@@ -187,17 +190,17 @@ function Row({ a, fiat, onDone }: { a: MyAngpao; fiat: ReturnType<typeof useFiat
             disabled={isSending}
             className="rounded-lg border border-border px-3 py-2 text-xs font-semibold disabled:opacity-50"
           >
-            Cancel &amp; refund
+            {t.dash.cancel}
           </button>
         )}
-        {!canRefund && left > 0 && <span className="text-xs text-muted">Refund opens at expiry</span>}
+        {!canRefund && left > 0 && <span className="text-xs text-muted">{t.dash.refundAtExpiry}</span>}
         <a
           href={getExplorerUrl(`/address/${a.address}`)}
           target="_blank"
           rel="noopener noreferrer"
           className="ml-auto text-xs text-muted underline"
         >
-          Explorer
+          {t.wallet.explorer}
         </a>
       </div>
     </div>

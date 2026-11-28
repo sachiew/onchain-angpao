@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
 import { Envelope } from "./envelope";
 import type { Theme } from "../lib/themes";
+import { useT } from "../lib/i18n";
 
 export function haptic(ms = 25) {
   try {
@@ -37,6 +38,7 @@ export function OpenEnvelope({
   children: ReactNode;
 }) {
   const reduce = useReducedMotion();
+  const t = useT();
   const { from, to, accent, ink } = theme.palette;
 
   return (
@@ -59,7 +61,7 @@ export function OpenEnvelope({
               whileTap={reduce || !canOpen ? undefined : { scale: 0.96, rotate: -1.5 }}
               whileHover={reduce || !canOpen ? undefined : { scale: 1.02 }}
               className="block w-full cursor-pointer disabled:cursor-default"
-              aria-label="Open the angpao"
+              aria-label={t.claim.openAria}
             >
               <Envelope theme={theme} amountLabel={closedLabel} subLabel={subLabel} message={message} float={canOpen} />
             </motion.button>
@@ -69,7 +71,7 @@ export function OpenEnvelope({
                 animate={reduce ? undefined : { opacity: [0.5, 1, 0.5] }}
                 transition={{ duration: 1.6, repeat: Infinity }}
               >
-                Tap to open
+                {t.claim.tapToOpen}
               </motion.p>
             )}
           </motion.div>

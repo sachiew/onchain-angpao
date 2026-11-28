@@ -3,7 +3,8 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import type { Address } from "@solana/kit";
 import { ellipsify } from "../lib/explorer";
-import { timeAgo, type FeedEntry } from "../lib/feed";
+import { type FeedEntry } from "../lib/feed";
+import { timeAgoT, useT } from "../lib/i18n";
 import { formatSol, lamportsToSol } from "../lib/split";
 import { formatFiat, type FiatCode } from "../lib/fiat";
 
@@ -28,8 +29,9 @@ export function ClaimFeed({
   solPrice?: number;
 }) {
   const reduce = useReducedMotion();
+  const t = useT();
   if (entries.length === 0) {
-    return <p className="py-6 text-center text-sm text-muted">No claims yet. Be the first! 🏃</p>;
+    return <p className="py-6 text-center text-sm text-muted">{t.claim.noClaims}</p>;
   }
   return (
     <ul className="divide-y divide-border-low">
@@ -53,13 +55,13 @@ export function ClaimFeed({
               <p className="flex items-center gap-2 truncate text-sm font-semibold">
                 <span className="font-mono">{ellipsify(e.claimer, 4)}</span>
                 {e.claimer === me && (
-                  <span className="rounded-full bg-foreground px-1.5 py-0.5 text-[10px] font-bold text-background">YOU</span>
+                  <span className="rounded-full bg-foreground px-1.5 py-0.5 text-[10px] font-bold text-background">{t.claim.you}</span>
                 )}
                 {e.luckiest && (
-                  <span className="rounded-full bg-amber-400 px-1.5 py-0.5 text-[10px] font-bold text-black">LUCKIEST</span>
+                  <span className="rounded-full bg-amber-400 px-1.5 py-0.5 text-[10px] font-bold text-black">{t.claim.luckiestTag}</span>
                 )}
               </p>
-              <p className="text-xs text-muted">{timeAgo(e.ts, now)}</p>
+              <p className="text-xs text-muted">{timeAgoT(t, e.ts, now)}</p>
             </div>
             <div className="text-right">
               <p className="text-sm font-bold tabular-nums">

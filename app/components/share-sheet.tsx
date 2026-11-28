@@ -2,6 +2,7 @@
 
 import { QRCodeSVG } from "qrcode.react";
 import { useState } from "react";
+import { useT } from "../lib/i18n";
 
 export function ShareSheet({
   url,
@@ -19,6 +20,7 @@ export function ShareSheet({
   explorerUrl?: string;
 }) {
   const [copied, setCopied] = useState(false);
+  const t = useT();
   const [qr, setQr] = useState<"link" | "wallet">("link");
   const origin = new URL(url).origin;
   // Solana Pay transaction request: the link inside `solana:` must be URL-encoded (it has a query).
@@ -50,20 +52,20 @@ export function ShareSheet({
               onClick={() => setQr(k)}
               className={`rounded-md px-3 py-1.5 ${qr === k ? "bg-background shadow-sm" : "text-muted"}`}
             >
-              {k === "link" ? "Camera QR" : "Wallet QR (Solana Pay)"}
+              {k === "link" ? t.share.cameraQr : t.share.walletQr}
             </button>
           ))}
         </div>
       )}
       {qr === "wallet" && (
         <p className="-mt-2 text-center text-xs text-muted">
-          Scan inside Phantom, Solflare or Backpack to claim straight into that wallet. No gas.
+          {t.share.walletQrHint}
         </p>
       )}
       <div className="flex items-center gap-2 rounded-xl border border-border bg-card p-2 pl-3">
         <span className="min-w-0 flex-1 truncate font-mono text-xs">{url}</span>
         <button onClick={copy} className="shrink-0 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground">
-          {copied ? "Copied!" : "Copy"}
+          {copied ? t.share.copied : t.share.copy}
         </button>
       </div>
       <div className="grid grid-cols-2 gap-2">
@@ -80,19 +82,19 @@ export function ShareSheet({
         </a>
         {canNativeShare && (
           <button className={btn} onClick={() => navigator.share({ text, url }).catch(() => {})}>
-            More…
+            {t.share.more}
           </button>
         )}
         <a className={btn} href={url}>
-          Open angpao
+          {t.share.openAngpao}
         </a>
       </div>
       <a className={`${btn} w-full`} target="_blank" rel="noopener noreferrer" href={blinkUrl}>
-        Open as Blink
+        {t.share.openBlink}
       </a>
       {explorerUrl && (
         <a className="block text-center text-xs text-muted underline" target="_blank" rel="noopener noreferrer" href={explorerUrl}>
-          View transaction on Solana Explorer
+          {t.share.viewTx}
         </a>
       )}
     </div>

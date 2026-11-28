@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { Envelope } from "./components/envelope";
 import { THEMES } from "./lib/themes";
 import { NETWORK } from "./lib/config";
+import { useT } from "./lib/i18n";
 
 /** Simple 24×24 stroke icons (original, no icon library). */
 const ICONS = {
@@ -26,93 +29,79 @@ const ICONS = {
   ),
 };
 
-const STEPS = [
-  { n: 1, icon: ICONS.packet, title: "Fill it", body: "Pick a total, how many packets, Lucky or Equal, and a greeting." },
-  { n: 2, icon: ICONS.share, title: "Share it", body: "Send the link, QR or Blink to your group chat." },
-  {
-    n: 3,
-    icon: ICONS.rush,
-    title: "Friends & family rush in",
-    body: "They open the envelope and claim in seconds. No wallet yet? They get a free one instantly. No gas needed.",
-  },
-];
+const STEP_ICONS = [ICONS.packet, ICONS.share, ICONS.rush];
+const ROADMAP_EMOJI = ["🐐", "💵", "🧑", "📱"];
 
 /** Privy (email/Google wallets) is optional; without it, first-timers get an in-browser wallet. */
 const SOCIAL_WALLETS = !!process.env.NEXT_PUBLIC_PRIVY_APP_ID;
 
-const NO_WALLET_POINTS = [
-  {
-    emoji: "✨",
-    title: "Free wallet in one tap",
-    body: SOCIAL_WALLETS
-      ? "We create one instantly, linked to their email or Google account."
-      : "We create one instantly in their browser. No app or sign-up.",
-  },
-  { emoji: "⛽", title: "Zero fees to claim", body: "We cover the network fee, so a brand-new wallet with 0 SOL works." },
-  { emoji: "📱", title: "Works on any phone", body: "Scan the QR or tap the link. Nothing to install." },
-];
-
-const ROADMAP = [
-  { emoji: "🐐", title: "Mainnet", body: "Coming for CNY 2027, the Year of the Goat." },
-  { emoji: "💵", title: "USDC packets", body: "Send exact dollar amounts that don't move with the SOL price." },
-  { emoji: "🧑", title: "Human-only claims", body: "An optional check so bots can't sweep big angpaos." },
-  { emoji: "📱", title: "Phone app", body: "On the Solana dApp Store, for Seeker phones." },
-];
-
 export default function Home() {
+  const t = useT();
+  const steps = t.home.steps.map((s, i) => ({ ...s, n: i + 1, icon: STEP_ICONS[i] }));
+  const noWalletPoints = [
+    { emoji: "✨", title: t.home.points.walletTitle, body: SOCIAL_WALLETS ? t.home.points.walletSocial : t.home.points.walletBurner },
+    { emoji: "⛽", title: t.home.points.feesTitle, body: t.home.points.feesBody },
+    { emoji: "📱", title: t.home.points.phoneTitle, body: t.home.points.phoneBody },
+  ];
+  const roadmap = t.home.roadmap.map((r, i) => ({ ...r, emoji: ROADMAP_EMOJI[i] }));
   return (
     <div className="flex flex-col gap-16 pt-10 sm:pt-16">
       <section className="grid items-center gap-10 md:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-6">
           <div className="flex flex-wrap items-center gap-2">
             <p className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted">
-              Red packets on Solana
+              {t.home.pill}
             </p>
             {NETWORK !== "mainnet" && (
               <p className="inline-flex items-center gap-1.5 rounded-full border border-[#f6a945]/40 bg-[#f6a945]/10 px-3 py-1 text-xs font-semibold text-[#f6a945]">
-                <span aria-hidden>🐐</span> Mainnet coming soon this GOAT CNY 2027
+                <span aria-hidden>🐐</span> {t.home.mainnetSoon}
               </p>
             )}
           </div>
           <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
-            Send an angpao.
+            {t.home.h1a}
             <br />
             <span className="bg-gradient-to-r from-[#e63946] to-[#f6a945] bg-clip-text text-transparent">
-              Let friends &amp; family race for it.
+              {t.home.h1b}
             </span>
           </h1>
           <p className="text-xl font-bold tracking-wide text-[#f6a945]" lang="zh">
-            发红包，抢好运！
+            {t.home.tagline}
           </p>
           <p className="max-w-md text-lg text-muted">
-            Split SOL into lucky or equal packets. Your friends and family claim in seconds, even if they&apos;ve never
-            touched crypto.
+            {t.home.sub}
           </p>
           <div className="flex flex-wrap gap-3">
             <Link
               href="/create"
               className="rounded-xl bg-[#c8102e] px-6 py-3 text-base font-bold text-white shadow-lg shadow-red-900/20 transition hover:brightness-110 active:scale-[0.98]"
             >
-              Create angpao 🧧
+              {t.home.ctaCreate}
             </Link>
             <Link href="/dashboard" className="rounded-xl border border-border px-6 py-3 text-base font-semibold hover:bg-accent">
-              My angpaos
+              {t.home.ctaMine}
             </Link>
           </div>
         </div>
         <div className="mx-auto w-56 sm:w-72">
-          <Envelope theme={THEMES[0]} amountLabel="$88.00" subLabel="8 packets · Lucky" message="Huat ah! 恭喜发财" />
+          <Envelope theme={THEMES[0]} amountLabel="$88.00" subLabel={`${t.common.packets(8)} · ${t.common.lucky}`} message="Huat ah! 恭喜发财" />
         </div>
       </section>
 
+      <figure className="mx-auto max-w-2xl text-center">
+        <span aria-hidden className="block text-3xl leading-none text-[#f6a945]/70">“</span>
+        <blockquote className="mt-1 text-xl font-semibold leading-relaxed tracking-tight sm:text-2xl">{t.home.ethos}</blockquote>
+        <span aria-hidden className="mt-3 block text-lg">🧧</span>
+      </figure>
+
       <section className="relative overflow-hidden rounded-3xl border border-[#f6a945]/30 bg-gradient-to-br from-[#c8102e]/10 via-transparent to-[#f6a945]/10 p-6 sm:p-8">
-        <p className="text-xs font-semibold uppercase tracking-wider text-[#e63946]">New to crypto?</p>
-        <h2 className="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">No wallet? No problem.</h2>
+        <p className="text-xs font-semibold uppercase tracking-wider text-[#e63946]">{t.home.newToCrypto}</p>
+        <h2 className="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">{t.home.noWalletTitle}</h2>
         <p className="mt-2 max-w-xl text-muted">
-          Grandma, your cousins, the office group chat: anyone can claim, even with zero onchain experience.
+          {t.home.noWalletSub}
         </p>
         <ul className="mt-6 grid gap-4 sm:grid-cols-3">
-          {NO_WALLET_POINTS.map((p) => (
+          {noWalletPoints.map((p) => (
             <li key={p.title} className="flex gap-3">
               <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-card text-xl shadow-sm">
                 {p.emoji}
@@ -127,9 +116,9 @@ export default function Home() {
       </section>
 
       <section>
-        <h2 className="mb-6 text-sm font-semibold uppercase tracking-wider text-muted">How it works</h2>
+        <h2 className="mb-6 text-sm font-semibold uppercase tracking-wider text-muted">{t.home.howItWorks}</h2>
         <ol className="grid gap-4 sm:grid-cols-3">
-          {STEPS.map((s, i) => (
+          {steps.map((s, i) => (
             <li
               key={s.n}
               className="group relative rounded-2xl border border-border bg-card p-5 transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-red-900/10 motion-reduce:transform-none"
@@ -155,7 +144,7 @@ export default function Home() {
               </div>
               <h3 className="font-bold">{s.title}</h3>
               <p className="mt-1 text-sm text-muted">{s.body}</p>
-              {i < STEPS.length - 1 && (
+              {i < steps.length - 1 && (
                 <span
                   aria-hidden
                   className="absolute -right-3.5 top-1/2 z-10 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background text-xs text-muted sm:flex"
@@ -170,18 +159,18 @@ export default function Home() {
 
       <section>
         <div className="mb-6 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">What&apos;s next</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">{t.home.whatsNext}</h2>
           <a
             href="https://x.com/sooneggg"
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm text-muted underline-offset-2 hover:text-foreground hover:underline"
           >
-            Have an idea? Tell me on X →
+            {t.home.idea}
           </a>
         </div>
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {ROADMAP.map((r) => (
+          {roadmap.map((r) => (
             <li key={r.title} className="rounded-2xl border border-dashed border-border p-4">
               <div className="flex items-center gap-2">
                 <span aria-hidden className="text-lg">
@@ -189,7 +178,7 @@ export default function Home() {
                 </span>
                 <h3 className="font-bold">{r.title}</h3>
                 <span className="ml-auto rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted">
-                  Soon
+                  {t.home.soon}
                 </span>
               </div>
               <p className="mt-1.5 text-sm text-muted">{r.body}</p>
