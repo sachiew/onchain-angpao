@@ -149,6 +149,7 @@ A fresh clone talks to the **already-deployed devnet program** by default, so yo
 2. Add an **Upstash Redis** database from the Vercel Marketplace (Storage tab). The app reads either `UPSTASH_REDIS_REST_URL` / `_TOKEN` or the `KV_REST_API_URL` / `_TOKEN` names it provisions.
 3. Add the environment variables: `RELAYER_SECRET_KEY` (mark it **Sensitive**), `NEXT_PUBLIC_SITE_URL=https://<your-domain>`, `COINGECKO_DEMO_API_KEY`, and `RPC_URL` / `NEXT_PUBLIC_RPC_URL` for a reliable RPC.
 4. Deploy, then check `https://<your-domain>/api/relayer`. It should return `"gasless": true`.
+5. **Auto-deploy on push:** connect the repo under Settings → Git, so every push to `main` deploys to production and pull requests get preview URLs. If you first created the project with `vercel deploy` from the CLI, check that Git deployments are actually switched on: they can stay disabled even after the repo is connected.
 
 The program itself isn't deployed by Vercel. It lives on devnet (see above).
 
