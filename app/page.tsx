@@ -52,6 +52,13 @@ const NO_WALLET_POINTS = [
   { emoji: "📱", title: "Works on any phone", body: "Scan the QR or tap the link. Nothing to install." },
 ];
 
+const ROADMAP = [
+  { emoji: "🐐", title: "Mainnet", body: "Coming for CNY 2027, the Year of the Goat." },
+  { emoji: "💵", title: "USDC packets", body: "Send exact dollar amounts that don't move with the SOL price." },
+  { emoji: "🧑", title: "Human-only claims", body: "An optional check so bots can't sweep big angpaos." },
+  { emoji: "📱", title: "Phone app", body: "On the Solana dApp Store, for Seeker phones." },
+];
+
 export default function Home() {
   return (
     <div className="flex flex-col gap-16 pt-10 sm:pt-16">
@@ -156,6 +163,36 @@ export default function Home() {
             </li>
           ))}
         </ol>
+      </section>
+
+      <section>
+        <div className="mb-6 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">What&apos;s next</h2>
+          <a
+            href="https://x.com/sooneggg"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-muted underline-offset-2 hover:text-foreground hover:underline"
+          >
+            Have an idea? Tell me on X →
+          </a>
+        </div>
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {ROADMAP.map((r) => (
+            <li key={r.title} className="rounded-2xl border border-dashed border-border p-4">
+              <div className="flex items-center gap-2">
+                <span aria-hidden className="text-lg">
+                  {r.emoji}
+                </span>
+                <h3 className="font-bold">{r.title}</h3>
+                <span className="ml-auto rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted">
+                  Soon
+                </span>
+              </div>
+              <p className="mt-1.5 text-sm text-muted">{r.body}</p>
+            </li>
+          ))}
+        </ul>
       </section>
     </div>
   );

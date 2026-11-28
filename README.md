@@ -179,6 +179,17 @@ Mainnet is **off by default**. It needs `NEXT_PUBLIC_NETWORK=mainnet`, `NEXT_PUB
 - **The dashboard's "Closed" list** is per browser. Closed accounts are deleted onchain and leave only their transaction history.
 - **OG images** fetch a CJK font subset from Google Fonts while rendering. If that fails, they fall back to Latin-only text.
 
+## Roadmap
+
+Potential next features. None of these are promises, and ideas are welcome: open an issue or ping [@sooneggg](https://x.com/sooneggg) on X.
+
+- [ ] **Mainnet launch**, targeting Chinese New Year 2027 (Year of the Goat 🐐, 6 Feb 2027).
+- [ ] **USDC / stablecoin packets.** "$8.88" stays exactly $8.88. Plan: a token vault owned by a separate account type (existing SOL angpaos keep working), and the sender pre-pays each claimer's token-account rent (≈0.002 SOL, refunded if unused) so the relayer stays cheap.
+- [ ] **Human-verification gate** with a [Solana Attestation Service](https://github.com/solana-foundation/solana-attestation-service) attestation, so bots can't sweep big angpaos.
+- [ ] **Kora** as the fee-payer service instead of the custom relayer (the relayer interface was designed for this swap).
+- [ ] **Phone app**: package as a PWA for the Solana dApp Store (Seeker).
+- [ ] **Blinks on X**: register with the Actions registry so claim buttons unfurl in posts.
+
 ## Project structure
 
 ```
