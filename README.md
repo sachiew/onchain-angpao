@@ -163,6 +163,70 @@ The program itself isn't deployed by Vercel. It lives on devnet (see above).
 
 After expiry, or once sold out, **Refund & close** on `/dashboard` returns all unclaimed packets plus the rent.
 
+## Running your own deployment: limits and what to adjust
+
+### Who pays for what
+
+| Who | Pays | Notes |
+| --- | --- | --- |
+| **You, the operator** | Every claim's network fee, from your relayer wallet (`RELAYER_SECRET_KEY`) | ≈10,300 lamports (≈0.00001 SOL) per claim. On mainnet that's real SOL. Forks use their own relayer key, so each deployment pays only for its own users |
+| **The sender** | The packets, their create tx fee, and a rent deposit | The deposit comes back on Refund & close |
+| **The claimer** | Nothing | Works with a brand-new 0-SOL wallet |
+
+The site copy "We cover the network fee" means the operator's relayer. A "gas tank" option where the sender pre-pays their guests' fees is on the [roadmap](#roadmap).
+
+### Abuse limits (relayer)
+
+All counters live in Upstash Redis, so they hold across serverless instances. Without Redis on a deployed Vercel environment, the relayer refuses to run instead of running unprotected.
+
+| Limit | Default | Where to change |
+| --- | --- | --- |
+| Daily spend cap | 0.1 SOL per UTC day (≈9,700 claims) | `RELAYER_DAILY_BUDGET_SOL` env var |
+| Build requests per IP | 20 per minute | `app/lib/server/claim-service.ts` (`build:ip`) |
+| Submit requests per IP | 20 per minute | same file (`submit:ip`) |
+| Build requests per angpao | 150 per minute | same file (`build:angpao`) |
+| Passphrase attempts per IP per angpao | 8 per minute | same file (`pass:`) |
+| Priority fee per claim | 30,000 CU × 10,000 µlamports = 300 lamports | `CLAIM_CU_LIMIT` / `CLAIM_CU_PRICE` in `app/lib/claim-tx.ts` |
+
+Good to know:
+- **The budget is charged when a claim is built**, not when it lands, so abandoned claims count too. The cap errs on the safe side.
+- **When the budget runs out**, gasless claims are refused until 00:00 UTC. On the claim page, someone with a **connected wallet holding a little SOL** automatically falls back to paying their own ≈0.000005 SOL fee. Instant wallets (0 SOL), passphrase angpaos (they need the server's co-signature), Blinks and Solana Pay all go through the relayer, so they wait for the reset. Raise the budget for big events.
+- **The relayer signs only one transaction shape** (`[SetComputeUnitLimit, SetComputeUnitPrice, claim]` for this program, with the relayer used only as fee payer), checked in `app/lib/server/verify.ts`. It can't be tricked into paying for anything else.
+- **Shared IPs:** an office or school Wi-Fi, or a Blink client's proxy, shares one per-IP limit. Raise it for big events.
+- **A race on the last packet:** when several people claim it at the same moment, the losing transactions can fail onchain after passing preflight, and the relayer still pays their fee.
+- **Monitor and top up:** `GET /api/relayer` shows whether gasless claims are on and the relayer address. Check its balance on an explorer, and top up with `pnpm relayer:fund` (devnet) or a normal transfer (mainnet). Keep only a small float on it.
+
+### Program limits (onchain)
+
+These are enforced by the program in `anchor/programs/angpao/src/constants.rs`, and mirrored in the app for friendly errors. Changing one means changing both, then rebuilding, redeploying the program and running `pnpm codama`.
+
+| Limit | Value | App mirror |
+| --- | --- | --- |
+| Packets per angpao | 1–50 (fits the 1,232-byte tx limit) | `MAX_PACKETS` in `app/lib/split.ts` |
+| Minimum packet | 0.001 SOL | `MIN_PACKET_LAMPORTS` in `app/lib/split.ts` |
+| Greeting length | 140 bytes (CJK characters and emoji use 3–4 bytes each) | `MAX_MESSAGE_BYTES` in `app/lib/angpao.ts` |
+| Maximum expiry | 7 days | `EXPIRY_OPTIONS` in `app/lib/angpao.ts` (1 h / 24 h / 3 d) |
+| Invite list | 50 wallets, written 25 per tx | `MAX_ALLOWLIST` / `ALLOWLIST_CHUNK` in `app/lib/gate.ts` |
+| Themes | 8. Append only, because the index is stored onchain | `app/lib/themes.ts` |
+| Passphrase minimum | 6 characters (app only) | `MIN_PASSPHRASE` in `app/lib/gate.ts` |
+
+### Make it yours
+
+| What | Where |
+| --- | --- |
+| GitHub link and feedback handle in the footer | `REPO_URL` and `FEEDBACK_X` in `app/components/site-footer.tsx`. Set `FEEDBACK_X` to `null` to hide it |
+| "Mainnet coming soon" pill, "What's next" roadmap, "Tell me on X" link | `app/page.tsx` |
+| Deploy-to-Vercel button | the `repository-url` in this README |
+| Currencies and the default currency | `app/lib/fiat.ts` (must be CoinGecko `vs_currencies` codes) and `NEXT_PUBLIC_DEFAULT_FIAT` |
+| Themes and greetings | `app/lib/themes.ts` |
+
+### Third-party services
+
+- **Privy** (optional): create an app at dashboard.privy.io. Enable **Email** and **Google** under Authentication (Google is on the Socials tab). Add every site you serve, including `http://localhost:3000`, under **Configuration → App settings → Domains**. A missing domain makes login fail. `NEXT_PUBLIC_*` values are built into the page, so redeploy after changing them.
+- **RPC:** `NEXT_PUBLIC_RPC_URL` is visible in the browser. Use a key you're fine exposing, ideally restricted to your domain in the provider's dashboard. `RPC_URL` stays on the server. The same Helius devnet URL works for both. In zsh, quote URLs that contain `?`.
+- **CoinGecko:** CoinGecko's API terms ask you to credit them, which is why the "Powered by CoinGecko API" link is in the footer and on claim pages. Keep it. Prices are cached for 60 s on the server and at the CDN.
+- **Upstash:** required in production (see above). The free tier is plenty.
+
 ## Mainnet notes
 
 Mainnet is **off by default**. It needs `NEXT_PUBLIC_NETWORK=mainnet`, `NEXT_PUBLIC_ENABLE_MAINNET=true` and a mainnet deployment of the program, and the app then shows a permanent warning banner. Use small amounts. Gifting money with a game-of-chance split may be regulated where you live, so check your local rules. The program hasn't been audited.
@@ -186,6 +250,7 @@ Potential next features. None of these are promises, and ideas are welcome: open
 - [ ] **Mainnet launch**, targeting Chinese New Year 2027 (Year of the Goat 🐐, 6 Feb 2027).
 - [ ] **USDC / stablecoin packets.** "$8.88" stays exactly $8.88. Plan: a token vault owned by a separate account type (existing SOL angpaos keep working), and the sender pre-pays each claimer's token-account rent (≈0.002 SOL, refunded if unused) so the relayer stays cheap.
 - [ ] **Human-verification gate** with a [Solana Attestation Service](https://github.com/solana-foundation/solana-attestation-service) attestation, so bots can't sweep big angpaos.
+- [ ] **Gas tank:** the sender optionally pre-pays their guests' claim fees, so the operator's relayer is paid back per claim and the unused amount is refunded.
 - [ ] **Kora** as the fee-payer service instead of the custom relayer (the relayer interface was designed for this swap).
 - [ ] **Phone app**: package as a PWA for the Solana dApp Store (Seeker).
 - [ ] **Blinks on X**: register with the Actions registry so claim buttons unfurl in posts.

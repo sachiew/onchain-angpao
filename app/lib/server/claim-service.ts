@@ -94,7 +94,7 @@ export async function buildClaim({ angpao, claimer, passphrase, ip }: BuildInput
   const spent = await store.incr(budgetKey(), fee, 2 * 86400);
   if (spent > dailyBudgetLamports()) {
     await store.incr(budgetKey(), -fee, 2 * 86400);
-    throw new ClaimError(503, "Today's gas budget is used up. Try again tomorrow, or claim with a funded wallet.", "BudgetExhausted");
+    throw new ClaimError(503, "Today's free-claim budget is used up. Try again after 00:00 UTC, or claim with a wallet that has a little SOL.", "BudgetExhausted");
   }
 
   const latest = await recentBlockhash();
