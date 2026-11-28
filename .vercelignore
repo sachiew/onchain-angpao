@@ -1,0 +1,7 @@
+# Never upload local secrets or build artifacts with `vercel deploy`
+.env*
+!.env.example
+.vercel
+anchor/target
+node_modules
+.next
