@@ -1,4 +1,4 @@
-# 🧧 Onchain Angpao
+# 🧧 Onchain Angpao 链上红包
 
 Send red packets (angpao / hongbao / duit raya) on Solana. Pick a total, a number of packets, **Lucky** or **Equal** split and a greeting. Share a link, QR or Blink. Friends open a themed envelope and claim straight into a Solana wallet, even a brand-new one with **0 SOL**, because claims are **gasless**.
 

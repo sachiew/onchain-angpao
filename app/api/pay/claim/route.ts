@@ -6,7 +6,7 @@ import { actionError, claimForAccount, json, origin, preflight } from "../../../
  * Passphrase-gated angpaos can't take input here; the QR on the claim page covers those.
  */
 export function GET(req: Request) {
-  return json({ label: "Onchain Angpao", icon: `${origin(req)}/icon.svg` });
+  return json({ label: "Onchain Angpao 链上红包", icon: `${origin(req)}/icon.svg` });
 }
 
 export async function POST(req: Request) {

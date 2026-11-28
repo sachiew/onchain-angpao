@@ -26,7 +26,7 @@ function siteUrl() {
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
-  title: { default: "Onchain Angpao", template: "%s · Onchain Angpao" },
+  title: { default: "Onchain Angpao 链上红包", template: "%s · Onchain Angpao 链上红包" },
   description:
     "Send red packets to friends and family on Solana. Lucky or equal splits, free instant wallets for first-timers, no gas needed.",
   icons: { icon: "/icon.svg", shortcut: "/icon.svg", apple: "/icon.svg" },

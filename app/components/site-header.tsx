@@ -19,6 +19,7 @@ export function SiteHeader() {
             <span aria-hidden className="text-xl">🧧</span>
             <span className="whitespace-nowrap">
               <span className="hidden min-[440px]:inline">Onchain </span>Angpao
+              <span className="ml-1.5 hidden text-sm font-semibold text-muted sm:inline">链上红包</span>
             </span>
           </Link>
           <nav className="flex items-center gap-2">

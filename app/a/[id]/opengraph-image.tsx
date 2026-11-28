@@ -22,7 +22,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
   const p = s?.theme.palette ?? { from: "#3f3f46", to: "#18181b", accent: "#a1a1aa", ink: "#fafafa", seal: "#a1a1aa" };
   const live = s && !s.soldOut && !s.expired;
 
-  const text = `${title}${message}${status}${sub}Onchain AngpaoClaim free · no gas needed${NETWORK}0123456789`;
+  const text = `${title}${message}${status}${sub}Onchain Angpao · 链上红包Claim free · no gas needed${NETWORK}0123456789`;
   const [bold, regular] = await Promise.all([loadSubsetFont(FAMILY, 800, text), loadSubsetFont(FAMILY, 500, text)]);
   const fonts = [
     ...(bold ? [{ name: FAMILY, data: bold, weight: 800 as const, style: "normal" as const }] : []),
@@ -93,7 +93,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
 
         {/* Copy */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 20, minWidth: 0 }}>
-          <div style={{ fontSize: 28, fontWeight: 500, opacity: 0.8, display: "flex" }}>Onchain Angpao</div>
+          <div style={{ fontSize: 28, fontWeight: 500, opacity: 0.8, display: "flex" }}>Onchain Angpao · 链上红包</div>
           <div style={{ fontSize: 104, fontWeight: 800, lineHeight: 1, color: p.accent, display: "flex" }}>{title}</div>
           <div
             style={{

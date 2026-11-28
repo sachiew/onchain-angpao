@@ -81,6 +81,9 @@ export default function Home() {
               Let friends &amp; family race for it.
             </span>
           </h1>
+          <p className="text-xl font-bold tracking-wide text-[#f6a945]" lang="zh">
+            发红包，抢好运！
+          </p>
           <p className="max-w-md text-lg text-muted">
             Split SOL into lucky or equal packets. Your friends and family claim in seconds, even if they&apos;ve never
             touched crypto.
