@@ -157,7 +157,7 @@ The program itself isn't deployed by Vercel. It lives on devnet (see above).
 | --- | --- | --- |
 | Sender | The packets themselves | Your total |
 | Sender | Account rent deposit (**refunded on close**) | ≈0.0057 SOL (8 packets), ≈0.020 SOL (50), +0.0002 SOL per invited wallet |
-| Sender | Create tx fee (+1 tx per 25 invitees) | ≈0.000005 SOL each |
+| Sender | Create tx fee (long invite lists may add a tx) | ≈0.000005 SOL each |
 | Relayer | Each claim (2 signatures + 300-lamport priority fee) | 10,300 lamports (≈0.00001 SOL). 15,300 if the gatekeeper is a separate key |
 | Claimer | Nothing | 0 |
 
@@ -234,7 +234,7 @@ Mainnet is **off by default**. It needs `NEXT_PUBLIC_NETWORK=mainnet`, `NEXT_PUB
 ## Limitations
 
 - **The passphrase gate is demo-grade.** A salted hash sits onchain, so a short passphrase can be brute-forced offline. The server's co-signature is the real check, so use something long.
-- **Invite lists** are capped at 50 wallets and take 1 + ⌈n/25⌉ signatures to create.
+- **Invite lists** are capped at 50 wallets. As many as fit are saved in the create transaction itself, so a typical angpao (≈8 packets, up to ~20 invitees) needs **one** wallet approval. Longer lists need one extra approval per 25 remaining wallets.
 - **Lucky randomness is chosen by the sender's browser** at creation. The sender could pick a favourable split.
 - **Burner wallets** keep their key in `localStorage`. Anyone with access to the browser can take the funds, so the UI pushes people to sweep to a real wallet.
 - **A race on the last packet:** when several people claim it at once, the losing transactions fail onchain and the relayer still pays their fee (≈0.00001 SOL each). Preflight simulation filters most of them out.

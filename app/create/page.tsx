@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { motion } from "motion/react";
 import useSWR from "swr";
-import type { Address } from "@solana/kit";
+import { createNoopSigner, type Address } from "@solana/kit";
 import { GateKind } from "../generated/angpao";
 import { Envelope } from "../components/envelope";
 import { ShareSheet } from "../components/share-sheet";
@@ -14,8 +14,10 @@ import { useFiat, usePrices } from "../lib/hooks/use-prices";
 import { useCluster } from "../components/cluster-context";
 import { parseTransactionError } from "../lib/errors";
 import {
+  approvalsNeeded,
   buildCreateAngpaoIx,
   buildSetAllowlistIxs,
+  planCreateTransactions,
   EXPIRY_OPTIONS,
   findAngpaoPda,
   MAX_MESSAGE_BYTES,
@@ -68,6 +70,7 @@ export default function CreatePage() {
   const { data: server } = useSWR("relayer-info", relayerInfo, { revalidateOnFocus: false });
   const gatekeeper = server?.gatekeeper ?? null;
   const allowlist = useMemo(() => parseAllowlist(allowlistText), [allowlistText]);
+  const [approvals, setApprovals] = useState(1);
 
   const theme = getTheme(themeId);
   const solPrice = prices?.solana?.[fiat];
@@ -99,6 +102,35 @@ export default function CreatePage() {
       : null,
   ].filter(Boolean) as string[];
 
+  // How many wallet approvals the invite list needs (only the tx shape matters, so a
+  // placeholder signer works before a wallet is connected).
+  const inviteCount = allowlist.addresses.length;
+  useEffect(() => {
+    if (gate !== "allowlist" || inviteCount === 0) return;
+    let live = true;
+    (async () => {
+      const who = createNoopSigner(signer?.address ?? ("11111111111111111111111111111111" as Address));
+      const { ix, angpao } = await buildCreateAngpaoIx({
+        creator: who,
+        id: 0n,
+        mode,
+        theme: themeId,
+        message,
+        amounts: Array.from({ length: packets }, () => 1_000_000n),
+        expiryTs: 0n,
+        fiat,
+        fiatTotalMinor: 0n,
+        gateKind: GateKind.Allowlist,
+        allowlistCap: inviteCount,
+      });
+      const plan = planCreateTransactions(who, angpao, ix, allowlist.addresses);
+      if (live) setApprovals(approvalsNeeded(plan));
+    })().catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [gate, inviteCount, allowlist.addresses, packets, message, mode, themeId, fiat, signer?.address]);
+
   const fiatLabel = fiatValue > 0 ? formatFiat(fiatValue, fiat) : null;
   const solLabel = lamports > 0n ? `${formatSol(lamports)} SOL` : null;
 
@@ -128,10 +160,12 @@ export default function CreatePage() {
             ? { gateKind: GateKind.Allowlist, allowlistCap: invitees.length }
             : {}),
       });
-      const signature = await send({ instructions: [ix] });
+      // Pack as much of the invite list as fits into the create tx (usually all of it).
+      const plan = planCreateTransactions(signer, angpao, ix, invitees);
+      const signature = await send({ instructions: plan.first });
       const shareText = `${theme.emoji} ${fiatLabel ?? solLabel} · ${packets} packets (${mode === "lucky" ? "Lucky" : "Equal"}). ${message}`;
       addHistory(signer.address, { angpao, createdAt: Date.now(), label: `${theme.emoji} ${fiatLabel ?? solLabel} · ${message}` });
-      const pendingAllowlist = await writeAllowlist(angpao, invitees);
+      const pendingAllowlist = await writeAllowlist(angpao, plan.rest);
       setCreated({ angpao, signature, shareText, passphrase: phrase, pendingAllowlist });
       if (!pendingAllowlist.length) toast.success("Angpao created!");
     } catch (e) {
@@ -166,7 +200,7 @@ export default function CreatePage() {
     if (created.pendingAllowlist.length) {
       return (
         <div className="mx-auto max-w-md space-y-4 pt-10 text-center">
-          <h1 className="text-2xl font-extrabold tracking-tight">One more signature</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight">One more approval</h1>
           <p className="text-muted">
             Your angpao is funded, but {created.pendingAllowlist.length} invited wallet
             {created.pendingAllowlist.length === 1 ? " isn't" : "s aren't"} on the list yet. Until they are, they
@@ -413,8 +447,11 @@ export default function CreatePage() {
                 aria-label="Invited wallets"
               />
               <p className="text-xs text-muted">
-                {allowlist.addresses.length}/{MAX_ALLOWLIST} wallets. Enforced onchain. Needs{" "}
-                {1 + Math.ceil(Math.max(allowlist.addresses.length, 1) / ALLOWLIST_CHUNK)} wallet signatures.
+                {inviteCount}/{MAX_ALLOWLIST} wallets · only these wallets can claim (checked onchain).
+                {inviteCount > 0 &&
+                  (approvals === 1
+                    ? " Saved in the same transaction, so you approve once."
+                    : ` The list is too long for one transaction, so your wallet will ask you to approve ${approvals} times.`)}
               </p>
             </div>
           )}
