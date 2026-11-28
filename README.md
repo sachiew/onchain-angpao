@@ -6,7 +6,7 @@ Send red packets (angpao / hongbao / duit raya) on Solana. Pick a total, a numbe
 
 - **Lucky or Equal splits** up to 50 packets, with amounts fixed onchain at creation. Lucky uses the "double average" draw.
 - **Gasless claims.** A relayer pays the fee and only ever signs one exact transaction shape.
-- **Instant wallets** for people who don't have one: Privy embedded wallets (email/Google) when configured, otherwise an in-browser burner wallet. Android users also get Mobile Wallet Adapter.
+- **Instant wallets** for people who don't have one: Privy embedded wallets (email/Google) when `NEXT_PUBLIC_PRIVY_APP_ID` is set (tested live with the relayer paying the fee), otherwise an in-browser burner wallet. Android users also get Mobile Wallet Adapter.
 - **Gates:** anyone with the link, a **passphrase** (the server co-signs), or an **invite list** of up to 50 wallets (enforced by the program).
 - **Live claim feed** through a websocket account subscription, a countdown, a sold-out state and a 👑 for the luckiest packet.
 - **Local currency** everywhere (22 currencies including USD, EUR, GBP, JPY, CNY, HKD, SGD, MYR, IDR, THB, INR and AUD) via CoinGecko, showing the value at creation and the value now.
@@ -172,7 +172,6 @@ Mainnet is **off by default**. It needs `NEXT_PUBLIC_NETWORK=mainnet`, `NEXT_PUB
 - **Solana Pay QR** isn't offered for passphrase angpaos, because transaction requests can't ask for input.
 - **The dashboard's "Closed" list** is per browser. Closed accounts are deleted onchain and leave only their transaction history.
 - **OG images** fetch a CJK font subset from Google Fonts while rendering. If that fails, they fall back to Latin-only text.
-- **Privy with an outside fee payer** hasn't been tested yet. Burner wallets are the fallback.
 
 ## Project structure
 
