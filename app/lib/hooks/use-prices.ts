@@ -32,7 +32,7 @@ function readFiat(): FiatCode | null {
 
 /** The viewer's selected local currency (remembered per browser, shared across components). */
 export function useFiat(): [FiatCode, (c: FiatCode) => void] {
-  const fallback: FiatCode = isFiatCode(DEFAULT_FIAT) ? DEFAULT_FIAT : "myr";
+  const fallback: FiatCode = isFiatCode(DEFAULT_FIAT) ? DEFAULT_FIAT : "usd";
   const fiat = useSyncExternalStore(
     (cb) => {
       listeners.add(cb);

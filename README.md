@@ -9,7 +9,7 @@ Send red packets (angpao / hongbao / duit raya) on Solana. Pick a total, a numbe
 - **Instant wallets** for people who don't have one: Privy embedded wallets (email/Google) when configured, otherwise an in-browser burner wallet. Android users also get Mobile Wallet Adapter.
 - **Gates:** anyone with the link, a **passphrase** (the server co-signs), or an **invite list** of up to 50 wallets (enforced by the program).
 - **Live claim feed** through a websocket account subscription, a countdown, a sold-out state and a 👑 for the luckiest packet.
-- **Local currency** everywhere (MYR, SGD, IDR, USD, CNY) via CoinGecko, showing the value at creation and the value now.
+- **Local currency** everywhere (22 currencies including USD, EUR, GBP, JPY, CNY, HKD, SGD, MYR, IDR, THB, INR and AUD) via CoinGecko, showing the value at creation and the value now.
 - **8 themes:** Chinese New Year, Hari Raya, Deepavali, Christmas, Birthday, Wedding, Graduation and Custom. Each has greetings in English, Bahasa Melayu and 中文.
 - **Sharing:** link, camera QR, Solana Pay wallet QR, Blink, WhatsApp/Telegram, and themed Open Graph previews.
 - **Creator dashboard** with claim progress, **Refund & close** (after expiry or once sold out) and **Cancel** (before anyone claims).
@@ -108,7 +108,7 @@ Every variable is documented in [`.env.example`](.env.example). The ones that ma
 | `COINGECKO_DEMO_API_KEY` | recommended | Free key. Keyless works only for light local use |
 | `NEXT_PUBLIC_PRIVY_APP_ID` | – | Enables email/Google embedded wallets. Otherwise burner wallets are used |
 | `NEXT_PUBLIC_SITE_URL` | production | Used for share links, Blink icons and OG images |
-| `NEXT_PUBLIC_DEFAULT_FIAT` | – | `myr` by default |
+| `NEXT_PUBLIC_DEFAULT_FIAT` | – | `usd` by default. Any of the 22 codes in `app/lib/fiat.ts` |
 
 ## Deploy the program to devnet
 

@@ -42,5 +42,5 @@ export const PROGRAM_ADDRESS: Address = process.env.NEXT_PUBLIC_PROGRAM_ID
 export const CHAIN = `solana:${NETWORK}` as const;
 
 export const DEFAULT_FIAT = (
-  process.env.NEXT_PUBLIC_DEFAULT_FIAT ?? "myr"
+  process.env.NEXT_PUBLIC_DEFAULT_FIAT ?? "usd"
 ).toLowerCase();
