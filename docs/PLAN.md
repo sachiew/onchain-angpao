@@ -1,6 +1,6 @@
 # M0 Plan: Onchain Angpao
 
-Status: **waiting for OK**. This plan resolves the gaps found in the SPEC review; every place it changes the spec is marked **Δ**.
+Status: **implemented** (M1–M6 shipped). Kept as the design record. This plan resolved the gaps found in the SPEC review; every place it changes the spec is marked **Δ**.
 
 ## 1. Sources read (2026-11-27)
 
@@ -192,7 +192,7 @@ onchain-angpao/
 3. **Public devnet RPC limits** for `accountSubscribe` during the demo. I'll recommend a free Helius or Triton devnet key and add polling as a fallback.
 4. **Blink unfurling on X** needs registry approval. I'll check the current status in M5.
 
-## 10. Open questions for you
+## 10. Open questions (resolved at kickoff)
 
 1. **Allowlist gate:** (a) **recommended**: store up to 50 pubkeys onchain and have the program enforce it, which needs no gatekeeper and no DB; (b) postpone allowlists and ship only the passphrase gate in v1.
 2. **Passphrase strength:** with a hash onchain, a short passphrase can be guessed offline. Is that OK for a demo (with a note in the README)? The alternative needs Upstash to store a secret per angpao.

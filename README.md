@@ -122,6 +122,8 @@ pnpm codama                        # if the IDL changed
 
 ## Fork guide (your own program and relayer)
 
+A fresh clone talks to the **already-deployed devnet program** by default, so you can try everything without Rust or Anchor: you only need your own relayer key (step 4). That program's upgrade authority is its original deployer, so for anything beyond experimenting, deploy your own copy (steps 1–3) and you control the code your angpaos run on.
+
 1. **New program ID.** Generate your own keypair, so you're the upgrade authority:
    ```bash
    cd anchor
@@ -188,6 +190,7 @@ app/
   lib/                                  split, fiat, themes, gate, feed, claim-tx, wallet/*, server/*
 scripts/                                relayer + smoke scripts
 tests/                                  vitest
+docs/                                   SPEC.md (original brief), PLAN.md (design decisions + deviations log)
 ```
 
 ## License
